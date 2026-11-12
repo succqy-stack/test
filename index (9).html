@@ -1,0 +1,1731 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anime Duel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070a14;--surface:rgba(255,255,255,.045);--surface2:rgba(255,255,255,.08);
+    --line:rgba(255,255,255,.1);--ink:#eef1fb;--muted:#8d97b5;
+    --red:#ff5a4f;--red2:#ff3d6e;--grad:linear-gradient(135deg,#ff5a4f,#ff3d8b);
+    --ok:#3ddc97;--bad:#ff6b6b;--ease:cubic-bezier(.22,.8,.24,1);
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{font-family:'Poppins',system-ui,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:radial-gradient(900px 520px at 12% -8%,rgba(255,61,139,.16),transparent 60%),
+               radial-gradient(800px 520px at 100% 0%,rgba(91,124,250,.16),transparent 60%),
+               radial-gradient(900px 600px at 50% 120%,rgba(24,185,160,.10),transparent 60%),
+               radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px) 0 0/24px 24px}
+  ::selection{background:#ff5a4f66}
+  ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#ffffff22;border-radius:10px;border:2px solid transparent;background-clip:padding-box}
+
+  .screen{display:none;height:100vh;height:100dvh;padding:16px 26px;overflow-x:hidden;overflow-y:auto;scrollbar-width:none}
+  .screen::-webkit-scrollbar{display:none}
+  #game{overflow:hidden}
+  .screen.active{display:flex;flex-direction:column;animation:screenIn .55s var(--ease) both}
+  @keyframes screenIn{from{opacity:0;transform:translateY(14px) scale(.992);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+  .logo{font-family:'Anton',Impact,'Arial Narrow',sans-serif;font-size:40px;line-height:1;text-transform:uppercase;letter-spacing:.5px;user-select:none;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 4px 18px rgba(255,61,139,.35))}
+  button{font-family:inherit}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+  .who{display:flex;gap:8px;flex-wrap:wrap}
+  .who input,.who select{padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:14px;outline:none;transition:border-color .25s,background .25s,box-shadow .25s}
+  .who input:focus,.who select:focus{border-color:#ff5a4f99;background:var(--surface2);box-shadow:0 0 0 4px #ff5a4f22}
+  .who select option{color:#000}
+
+  /* menu cards */
+  .cards{margin:auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:22px;max-width:1100px;width:100%;align-self:center;padding:20px 0}
+  .mcard{position:relative;border:0;border-radius:22px;min-height:min(320px,48vh);color:#fff;text-align:left;padding:26px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;
+    box-shadow:0 18px 40px -12px #000a,inset 0 0 0 1px #ffffff22;transition:transform .45s var(--ease),box-shadow .45s var(--ease);
+    animation:rise .7s var(--ease) both}
+  .mcard:nth-child(2){animation-delay:.08s}.mcard:nth-child(3){animation-delay:.16s}
+  @keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+  .mcard::after{content:"";position:absolute;inset:0;background:radial-gradient(420px 220px at var(--mx,70%) var(--my,0%),rgba(255,255,255,.28),transparent 60%);opacity:0;transition:opacity .4s}
+  .mcard:hover{transform:translateY(-8px) scale(1.012);box-shadow:0 28px 56px -14px #000c,inset 0 0 0 1px #ffffff44}
+  .mcard:hover::after{opacity:1}
+  .mcard:active{transform:translateY(-3px) scale(.99)}
+  .mcard .ic{position:absolute;top:16px;right:20px;font-size:92px;opacity:.3;transition:transform .6s var(--ease),opacity .4s}
+  .mcard:hover .ic{transform:scale(1.14) rotate(-8deg);opacity:.5}
+  .mcard b{font-size:28px;font-weight:600;position:relative;z-index:1}
+  .mcard span{font-size:15px;opacity:.9;position:relative;z-index:1}
+  .c1{background:linear-gradient(160deg,#ff7a59,#c8283a 85%)}
+  .c2{background:linear-gradient(160deg,#5b7cfa,#5a24c4 85%)}
+  .c3{background:linear-gradient(160deg,#18b9a0,#0a5f78 85%)}
+
+  /* generic cards / buttons */
+  .box{background:var(--surface);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:20px;padding:22px;border:1px solid var(--line);box-shadow:0 20px 50px -20px #000c}
+  .rbtn{border:0;border-radius:12px;padding:13px 20px;background:var(--grad);color:#fff;font-weight:600;font-size:15px;cursor:pointer;box-shadow:0 8px 22px -8px rgba(255,61,110,.7);transition:transform .25s var(--ease),box-shadow .25s,filter .25s,opacity .25s}
+  .rbtn:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.08);box-shadow:0 14px 28px -8px rgba(255,61,110,.8)}
+  .rbtn:active:not(:disabled){transform:translateY(0) scale(.98)}
+  .rbtn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  .obtn{border:1px solid var(--line);border-radius:12px;padding:12px 18px;background:var(--surface);font-weight:600;font-size:15px;cursor:pointer;color:var(--ink);transition:background .25s,border-color .25s,transform .25s var(--ease)}
+  .obtn:hover{background:var(--surface2);border-color:#ffffff40;transform:translateY(-2px)}
+  .obtn:active{transform:scale(.98)}
+  .link{background:none;border:0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:13px;margin-top:6px;transition:color .2s}
+  .link:hover:not(:disabled){color:var(--ink)}
+  .field{width:100%;padding:13px 16px;border-radius:12px;border:1px solid var(--line);font:inherit;font-size:16px;outline:none;background:rgba(0,0,0,.28);color:var(--ink);transition:border-color .25s,box-shadow .25s,background .25s}
+  .field::placeholder{color:#6d7798}
+  .field:focus{border-color:#ff5a4fbb;box-shadow:0 0 0 4px #ff5a4f22;background:rgba(0,0,0,.4)}
+  select.field option{color:#000}
+  .center{max-width:460px;width:100%;margin:auto;text-align:center}
+  .center h2{margin:0 0 6px}
+  .stack{display:flex;flex-direction:column;gap:12px}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  .divider{opacity:.6;margin:6px 0;font-size:13px}
+
+  /* game: everything centred, image in the middle */
+  .g-main{flex:1;display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:8px;min-height:0;width:100%;max-width:760px;margin-left:auto;margin-right:auto}
+  .side{display:contents}
+  .banner{order:0;display:flex;gap:10px;font-weight:600}
+  .banner>div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:5px 20px;text-align:center;backdrop-filter:blur(12px);min-width:110px}
+  .banner span{display:block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .banner b{font-size:22px;line-height:1.15;font-weight:700;display:inline-block}
+  .banner b.bump{animation:bump .5s var(--ease)}
+  @keyframes bump{40%{transform:scale(1.25);color:var(--ok)}}
+  #oppSc{font-size:12px;color:var(--muted);display:block}
+  .stage{order:1;flex:1 1 0;min-height:0;display:flex;flex-direction:column;gap:12px;justify-content:center;align-items:center;min-width:0;width:100%}
+  .frame{position:relative;border-radius:20px;overflow:hidden;background:#0d1120;line-height:0;max-width:100%;
+    box-shadow:0 30px 70px -20px #000,0 0 0 1px var(--line),0 0 80px -30px rgba(255,61,139,.45)}
+  .frame img{display:block;max-width:none;opacity:0;transform:scale(1.03);transition:opacity .5s var(--ease),transform .7s var(--ease),width .35s var(--ease),height .35s var(--ease)}
+  .frame img.in{opacity:1;transform:none}
+  .thumbs{display:flex;flex-direction:row;gap:10px;justify-content:center;flex-wrap:wrap}
+  .thumb{width:44px;height:58px;border:2px solid transparent;border-radius:12px;overflow:hidden;padding:0;background:#222;cursor:pointer;opacity:.55;transform:scale(.94);transition:opacity .3s,transform .35s var(--ease),border-color .3s,box-shadow .3s}
+  .thumb:hover{opacity:.95;transform:scale(1)}
+  .thumb.sel{border-color:#ff5a8b;opacity:1;transform:scale(1.06);box-shadow:0 8px 20px -6px rgba(255,61,139,.7)}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .panel{order:2;width:100%;max-width:580px;background:var(--surface);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 24px 60px -24px #000}
+  .panel>div:not([hidden]){animation:viewIn .45s var(--ease) both}
+  @keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .phead{padding:11px 16px 10px;display:flex;justify-content:space-between;align-items:center;font-weight:600;gap:10px}
+  #timeTxt{font-variant-numeric:tabular-nums;background:var(--surface2);border-radius:999px;padding:2px 12px;min-width:44px;text-align:center}
+  .tbar{height:5px;background:#ffffff14;margin:0 16px;border-radius:99px;overflow:hidden}
+  .tbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#f2b705,#ff9d2e);border-radius:99px;transition:width .12s linear,background .4s}
+  .tbar i.urgent{background:linear-gradient(90deg,#ff5a4f,#ff3d6e);animation:pulse .8s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.6}}
+  .pbody{padding:12px 16px 14px}
+  .combo{position:relative}
+  .combo #answer{padding-right:46px}
+  .chev{position:absolute;right:6px;top:6px;bottom:6px;width:36px;border:0;border-radius:8px;background:none;font-size:16px;color:var(--muted);cursor:pointer;transition:background .2s,color .2s}
+  .chev:hover{background:var(--surface2);color:var(--ink)}
+  #answer{font-size:17px}
+  .gbtn{width:100%;margin-top:10px;padding:12px;border:0;border-radius:12px;background:#ffffff1a;color:#fff;font-weight:600;font-size:15px;cursor:pointer;transition:background .3s,transform .25s var(--ease),box-shadow .3s,opacity .25s}
+  .gbtn:hover:not(:disabled){background:var(--grad);transform:translateY(-2px);box-shadow:0 12px 26px -10px rgba(255,61,110,.8)}
+  .gbtn:active:not(:disabled){transform:scale(.98)}
+  .gbtn:disabled{opacity:.5;cursor:default}
+  #capNote{min-height:18px;margin-top:8px;font-size:14px;font-weight:600;color:#ff8a80;transition:opacity .3s}
+  #capNote:not(:empty){animation:viewIn .35s var(--ease)}
+  .dd{position:fixed;z-index:50;background:rgba(14,20,40,.96);backdrop-filter:blur(16px);color:#fff;border-radius:14px;box-shadow:0 20px 50px #000c;overflow-y:auto;padding:6px;border:1px solid var(--line);animation:ddIn .2s var(--ease)}
+  @keyframes ddIn{from{opacity:0;transform:translateY(6px) scale(.98)}to{opacity:1;transform:none}}
+  .dd .dh{font-size:11px;font-weight:700;letter-spacing:1px;color:#9fb0d0;background:#ffffff12;border-radius:6px;padding:3px 10px;margin:4px 0}
+  .dd .di{padding:9px 12px;border-radius:8px;cursor:pointer;font-size:15px;border:1px solid transparent;transition:background .15s,border-color .15s}
+  .dd .di:hover,.dd .di.hi{border-color:#ff5a4f88;background:#ffffff12}
+  .dd .dn{padding:10px 12px;color:#9fb0d0;font-size:14px}
+  .rrow{display:grid;grid-template-columns:80px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);transition:background .4s}
+  .rname{font-weight:600;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+  .rsaid{font-size:16px;word-break:break-word;transition:color .4s}
+  .rverd{font-weight:700;font-size:14px;color:var(--muted)}
+  .rrow.ok .rverd,.rrow.bad .rverd{animation:pop .45s var(--ease)}
+  .rrow.ok .rverd,.rrow.ok .rsaid{color:var(--ok)}
+  .rrow.bad .rverd,.rrow.bad .rsaid{color:var(--bad)}
+  .rrow.bad .rsaid{text-decoration:line-through;text-decoration-color:#ff6b6b66}
+  .abox{margin-top:10px;text-align:center;padding:10px;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid var(--line);transition:border-color .5s,box-shadow .5s}
+  .abox small{color:var(--muted);display:block}
+  .abox.show{border-color:#ff5a4f66;box-shadow:0 0 40px -12px rgba(255,61,139,.6)}
+  .atitle{font-weight:700;font-size:20px;margin-top:2px;color:#4c5473}
+  .abox.show .atitle{color:var(--ink);animation:pop .5s var(--ease)}
+  @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+  #nextInfo{text-align:center;font-size:13px;color:var(--muted);margin-top:8px}
+
+  /* lobby */
+  .lgrid{display:grid;grid-template-columns:1fr 1fr;gap:22px;max-width:1000px;width:100%;margin:auto}
+  .lgrid .box:nth-child(2){animation-delay:.1s}
+  .lgrid .box{animation:rise .6s var(--ease) both}
+  .code{font-family:'Anton',Impact,sans-serif;font-size:58px;letter-spacing:9px;text-align:center;margin:6px 0;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .player{display:flex;align-items:center;gap:10px;padding:11px 14px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:12px;margin:6px 0;font-weight:500;transition:color .3s,opacity .3s}
+  .player i{width:10px;height:10px;border-radius:50%;background:var(--ok);display:inline-block;box-shadow:0 0 10px var(--ok);transition:background .3s,box-shadow .3s}
+  .player.wait{color:#7a84a3}.player.wait i{background:#555e7a;box-shadow:none}
+  .chatlog{height:min(300px,32vh);scrollbar-width:none;overflow:auto;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:14px;margin-bottom:10px;scroll-behavior:smooth}
+  .msg{word-break:break-word;animation:viewIn .3s var(--ease)}.msg b{color:var(--red)}.msg.me b{color:#6ea8ff}
+  .msg.sys{color:var(--muted);font-style:italic}
+  .rhead{text-align:center;margin-bottom:10px}
+  .rbig{font-size:26px;font-weight:700}
+  .rsub{color:var(--muted)}
+  .rtable{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;text-align:left}
+  .rtable th{text-align:left;color:var(--muted);font-weight:600;padding:8px 6px;border-bottom:1px solid var(--line)}
+  .rtable td{padding:8px 6px;border-bottom:1px solid #ffffff0d;vertical-align:top}
+  .rtable td.ok{color:var(--ok)}.rtable td.bad{color:var(--bad)}
+  .spinner{width:48px;height:48px;border:4px solid #ffffff1c;border-top-color:var(--red);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 16px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #end .box,#mp .box{animation:rise .6s var(--ease) both}
+  #loading .center{animation:viewIn .6s var(--ease) both;color:var(--muted)}
+
+  @media(max-width:860px){
+    .cards{grid-template-columns:1fr;gap:12px}.mcard{min-height:clamp(100px,18vh,170px)}.mcard .ic{font-size:64px}.mcard b{font-size:22px}
+    .lgrid{grid-template-columns:1fr}
+    .logo{font-size:32px}
+    .screen{padding:12px}
+    .logo{font-size:28px}
+    .thumb{width:48px;height:66px}
+  }
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  ✏️  ADD YOUR OWN ANIME IMAGES HERE  (this is the only part   ║
+     ║  you need to edit)                                            ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<script>
+/*
+  HOW TO ADD AN IMAGE
+  1. Put the anime's name on the left (case & punctuation don't matter,
+     but it must be one of the titles from the ANIME list further down).
+  2. Put one image link — or several in [ ] — on the right.
+  3. Save. That's it. When an anime has your images, the game uses them
+     instead of the online databases (several = one is picked at random).
+
+  Links can be web URLs ("https://...") or files next to index.html ("img/naruto.png").
+  Mind the commas! Every line ends with a comma.
+*/
+const MY_IMAGES = {
+
+  // ── examples (delete or replace these) ───────────────────────────
+  // "Solo Leveling":    "https://example.com/jinwoo.jpg",
+  // "Code Geass":       ["img/lelouch.png", "img/cc.png"],
+  // "Spy x Family":     ["https://example.com/anya.jpg"],
+
+  // ── add yours below this line ────────────────────────────────────
+
+  "Bocchi the Rock!": [
+    "https://i.pinimg.com/736x/6c/b5/6d/6cb56d76ccaa77979ae77adadd3a5bac.jpg",
+  ],
+
+  "Akame ga Kill!": [
+    "https://i.pinimg.com/1200x/7e/60/a0/7e60a07b13cbb4e28378514e950bc0d9.jpg",
+    "https://i.pinimg.com/736x/d0/48/ba/d048ba2bd74180eb9f29aaf695c1db6f.jpg",
+  ],
+
+  "Darling in the Franxx": [
+    "https://i.pinimg.com/736x/3e/83/86/3e8386e0129368b40ca239f4184b21de.jpg",
+    "https://i.pinimg.com/736x/cf/d8/c7/cfd8c7f0e3e3de5b2fadc6bf7850458b.jpg",
+  ],
+
+  "Kill la Kill": [
+    "https://i.pinimg.com/736x/23/45/dc/2345dc39f33829277c96a9fc267a882b.jpg",
+    "https://i.pinimg.com/736x/25/3b/9a/253b9a2fd47c94dd163ce58c8a1b69b5.jpg",
+  ],
+
+  "86: Eighty-Six": [
+    "https://i.pinimg.com/1200x/ce/49/25/ce4925008078088c66a90eb0fbdc3772.jpg",
+    "https://i.pinimg.com/1200x/bf/b5/33/bfb53389d89984b6de4cfc12b3ef38b2.jpg",
+    "https://i.pinimg.com/1200x/a6/74/45/a67445637b48e65f9f8adbe7dc11c9e2.jpg",
+  ],
+
+  "Re:Zero": [
+    "https://i.pinimg.com/736x/31/29/51/312951fcbc7ef55e841a01e206d27005.jpg",
+    "https://i.pinimg.com/736x/e0/b3/ba/e0b3bae77427a05b546b5a1f34720219.jpg",
+  ],
+
+
+  // ── batch 2 ──────────────────────────────────────────────────────
+
+  "Plastic Memories": [
+    "https://i.pinimg.com/736x/58/cf/ef/58cfef1135f379443146a8a45f03042c.jpg",
+  ],
+
+  "Chained Soldier": [
+    "https://i.pinimg.com/736x/7a/72/a3/7a72a3abdcfd0656872eaf7852fda0be.jpg",
+    "https://i.pinimg.com/1200x/fd/66/5f/fd665fa2c6aabf9e2fd0ed90d2d21060.jpg",
+  ],
+
+  "Gate": [
+    "https://i.pinimg.com/1200x/da/43/21/da4321bb8cc7434109e0adf3f6916040.jpg",
+    "https://i.pinimg.com/1200x/c4/06/82/c40682ffb496f2709ed116098dcbfd63.jpg",
+  ],
+
+  "That Time I Got Reincarnated as a Slime": [
+    "https://i.pinimg.com/1200x/df/e5/2f/dfe52ff1f12a763fedb2414c19549f03.jpg",
+    "https://i.pinimg.com/736x/8b/6b/96/8b6b965f6905e4fac71c20ab4b23602e.jpg",
+  ],
+
+  "Gurren Lagann": [
+    "https://i.pinimg.com/736x/05/31/22/0531220b238acaba0aa0ce211059f4e0.jpg",
+  ],
+
+  "Made in Abyss": [
+    "https://thecinemaholic.com/wp-content/uploads/2022/08/Screenshot_2022-08-25-06-06-43-13_40deb401b9ffe8e1df2f1cc5ba480b12.jpg",
+  ],
+
+  "Spy x Family": [
+    "https://tse1.mm.bing.net/th/id/OIP.e3EttdVn2kyCS6oi9ptTtwHaD4?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
+  ],
+
+  "Himouto! Umaru-chan": [
+    "https://i.pinimg.com/1200x/b9/b9/3b/b9b93b3b7f6eb758f267d5f18548670f.jpg",
+    "https://i.pinimg.com/736x/7b/59/9d/7b599d57af4a98789f19b18a5540cd0c.jpg",
+    "https://i.pinimg.com/1200x/d2/60/04/d26004bd134e70d974f81fdde6881bb1.jpg",
+    "https://i.pinimg.com/736x/cb/96/49/cb9649d6d6a32940f84a4af74ca50376.jpg",
+    "https://i.pinimg.com/736x/99/5a/7d/995a7d0c129619e91bc2ea416035437f.jpg",
+  ],
+
+  "The Angel Next Door Spoils Me Rotten": [
+    "https://i.pinimg.com/736x/a5/46/08/a54608451ca123a1f93c573165f497e9.jpg",
+    "https://i.pinimg.com/1200x/db/d5/78/dbd578211f2a7f5d1da63c1ec5df99ba.jpg",
+  ],
+
+  "Smoking Behind the Supermarket with You": [
+    "https://i.pinimg.com/736x/2f/85/33/2f8533596c3daac088071cc3c49954ad.jpg",
+  ],
+
+  "Bofuri": [
+    "https://i.pinimg.com/736x/f6/79/e0/f679e0811714be048b62d382fdf37b9a.jpg",
+    "https://i.pinimg.com/736x/c2/26/57/c22657f49974901324b0a3b5c1cfe9a1.jpg",
+    "https://i.pinimg.com/736x/7e/20/f4/7e20f4b76a838cc50a4e50ac6f0d286b.jpg",
+  ],
+
+  "Overlord": [
+    "https://i.pinimg.com/736x/d6/9f/18/d69f18458a99135995cc00d8416533f0.jpg",
+  ],
+
+  "The Wise Man's Grandchild": [
+    "https://i.pinimg.com/originals/cb/e6/aa/cbe6aabc5b0b3b829fb8898927c3b083.gif",
+  ],
+
+  "Black Bullet": [
+    "https://static.wikia.nocookie.net/blackbullet2/images/1/16/Char_Kagetane.png/revision/latest?cb=20140419181919",
+    "https://i.pinimg.com/736x/0d/ce/4e/0dce4eb4841f0fa1d0e673ab6d9d4c0e.jpg",
+  ],
+
+  "Date A Live": [
+    "https://i.pinimg.com/736x/b4/3f/f0/b43ff01bb5c3a16f738f037c15d7bbb6.jpg",
+  ],
+
+  "Code Geass": [
+    "https://i.pinimg.com/736x/d1/b3/4d/d1b34d18d3f26f9689752e8fa9af7bff.jpg",
+  ],
+
+  "The Misfit of Demon King Academy": [
+    "https://i.pinimg.com/736x/f7/16/ca/f716cacd883763dcd7644510fb9c2986.jpg",
+  ],
+
+  "The Eminence in Shadow": [
+    "https://i.pinimg.com/736x/d4/7c/25/d47c255c2a718f5bc31c820157a32587.jpg",
+  ],
+
+  "Solo Leveling": [
+    "https://i.pinimg.com/736x/82/77/dd/8277dd05ef0b87df1ee438925f908ed6.jpg",
+    "https://i.pinimg.com/736x/b7/0c/b2/b70cb2eb7395dd04f29e8fbee34cb535.jpg",
+  ],
+
+  "Highschool of the Dead": [
+    "https://i.pinimg.com/1200x/4f/62/1c/4f621c7e96871eaa27a9c07e1d67cf05.jpg",
+    "https://i.pinimg.com/736x/89/ac/6f/89ac6f8e225ba61b6fdc86ed11a1e428.jpg",
+  ],
+
+  "My Hero Academia": [
+    "https://i.pinimg.com/1200x/2c/f8/8a/2cf88af4a12f967d5da50b21b38ccfd0.jpg",
+  ],
+
+  "Attack on Titan": [
+    "https://i.pinimg.com/1200x/38/72/a6/3872a6519ac0beacf5e4579d31746577.jpg",
+  ],
+
+  "My Gift Lvl 9999 Unlimited Gacha": [
+    "https://static.wikia.nocookie.net/my-gift-lvl-9999-unlimited-gacha/images/e/e7/Mei_Monster.png/revision/latest/scale-to-width-down/1000?cb=20260204020226",
+    "https://static.wikia.nocookie.net/my-gift-lvl-9999-unlimited-gacha/images/6/60/Ellie_Monster.png/revision/latest/scale-to-width-down/1000?cb=20260204020146",
+  ],
+
+  "The Ogre's Bride": [
+    "https://i.pinimg.com/736x/a1/b3/03/a1b303c60a717bfa9f2464393c957765.jpg",
+    "https://i.pinimg.com/736x/a2/32/8c/a2328ca781bcdbf8bac90335f6b13c95.jpg",
+  ],
+
+  "Clevatess": [
+    "https://tse2.mm.bing.net/th/id/OIP.teAfPaDvVBIXNccGmikGFgHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
+  ],
+
+  "Mushoku Tensei: Jobless Reincarnation": [
+    "https://i.pinimg.com/originals/10/d5/36/10d5369e960925e5ed0b392f9c28c7f6.gif",
+  ],
+
+  "Trapped in a Dating Sim: The World of Otome Games Is Tough for Mobs": [
+    "https://i.pinimg.com/1200x/44/7c/7e/447c7e6aaf2aa67c785acd2c95eafdb1.jpg",
+  ],
+
+  "The World's Strongest Rearguard": [
+    "https://i.pinimg.com/736x/fc/73/c7/fc73c75a717224156b6d2a456028f8c1.jpg",
+  ],
+
+  "Hell Mode": [
+    "https://cdn.anime-planet.com/characters/primary/cecil-granvelle-1-285x399.webp?t=1771214042",
+  ],
+
+  "I Became a Legend After My 10 Year-Long Last Stand": [
+    "https://i.pinimg.com/1200x/2f/b8/f5/2fb8f50993a19743aa2289c41bfdd575.jpg",
+  ],
+
+  "Wandering Witch: The Journey of Elaina": [
+    "https://i.pinimg.com/1200x/93/27/8e/93278eaa12fd253a4fe3cc08a0b219bc.jpg",
+    "https://i.pinimg.com/736x/4c/69/34/4c693445aa8aa13501996d4bd8816f01.jpg",
+  ],
+
+  "Ya Boy Kongming!": [
+    "https://i.pinimg.com/1200x/1b/7d/c8/1b7dc8fe2e41231d2d5d95007bd12656.jpg",
+    "https://i.pinimg.com/1200x/6e/66/e2/6e66e26d89305400cd261b3a9fb75ccb.jpg",
+  ],
+
+  "My Teen Romantic Comedy SNAFU": [
+    "https://i.pinimg.com/736x/b4/4d/2d/b44d2d354fac576b0814e66b67447db4.jpg",
+    "https://i.pinimg.com/736x/3e/1a/f7/3e1af75e700d6efb44c6c5c7ad107cef.jpg",
+  ],
+
+  "Alya Sometimes Hides Her Feelings in Russian": [
+    "https://i.pinimg.com/1200x/a8/01/d7/a801d7f4891dd59f555db834dc787073.jpg",
+  ],
+
+  "Guilty Crown": [
+    "https://i.pinimg.com/736x/5b/14/56/5b1456ec07caf808d40625d4d6adb90e.jpg",
+  ],
+
+  "Farming Life in Another World": [
+    "https://i.pinimg.com/736x/df/93/f9/df93f9178c652d1c689f6bb5fbb3fab9.jpg",
+  ],
+
+  "Bungo Stray Dogs": [
+    "https://i.pinimg.com/736x/2b/7f/1c/2b7f1c730c2d7553e9c9bb7f2b9499cc.jpg",
+  ],
+
+  "The World's Finest Assassin Gets Reincarnated in Another World as an Aristocrat": [
+    "https://i.pinimg.com/1200x/4e/3b/76/4e3b76ae145c7e9e793d50d2d169ade2.jpg",
+  ],
+
+  "Food Wars!": [
+    "https://i.pinimg.com/1200x/e2/97/fa/e297fabc43e5a42f97fb8f64d4119137.jpg",
+  ],
+
+  "The Quintessential Quintuplets": [
+    "https://i.pinimg.com/736x/23/ca/f6/23caf68e685224e95307031588ea4acc.jpg",
+  ],
+
+  "Sakamoto Days": [
+    "https://i.pinimg.com/736x/43/5f/72/435f72663c14f96c560f7146d5d5c935.jpg",
+  ],
+
+  "The Devil Is a Part-Timer!": [
+    "https://i.pinimg.com/736x/42/f2/39/42f239ce129e95166d02a3081b77e606.jpg",
+  ],
+
+  "Trinity Seven": [
+    "https://i.pinimg.com/736x/f3/ff/ca/f3ffca0d81ef953dbe53b9c9dc63306e.jpg",
+  ],
+
+  "Hero Without a Class: Who Even Needs Skills?!": [
+    "https://i.pinimg.com/736x/59/45/db/5945db696f6ad3a591d2da4b7ac0b80d.jpg",
+  ],
+
+  "To Love-Ru": [
+    "https://wheredoestheanimeleaveoff.com/wp-content/uploads/2022/11/to-love-ru-anime.png",
+  ],
+
+  "KonoSuba": [
+    "https://i.pinimg.com/736x/eb/b2/ec/ebb2ec41274fda7438f3da92f8eabf88.jpg",
+  ],
+
+  "My Deer Friend Nokotan": [
+    "https://wallpapercave.com/wp/wp14405574.jpg",
+  ],
+
+  "I've Been Killing Slimes for 300 Years and Maxed Out My Level": [
+    "https://tse1.mm.bing.net/th/id/OIP.jmtJysRs3LD47pXtGc9edwHaEE?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
+  ],
+
+  "Sword of the Demon Hunter: Kijin Gentosho": [
+    "https://i.pinimg.com/736x/ee/93/f7/ee93f7c39a34b9cc9f07294553f187c3.jpg",
+  ],
+
+  "Aharen-san wa Hakarenai": [
+    "https://i.pinimg.com/736x/af/94/6d/af946d079b008f7c94dfb2aa4577ad44.jpg",
+  ],
+
+  "Ragna Crimson": [
+    "https://i.pinimg.com/originals/7f/11/24/7f1124058251850c6dec9ead352d54a7.jpg",
+  ],
+
+  "Akiba Maid War": [
+    "https://i.pinimg.com/1200x/f5/30/79/f530795d150d6b3f069a54e2e4c55a4a.jpg",
+  ],
+
+  "Redo of Healer": [
+    "https://tse1.explicit.bing.net/th/id/OIP.U9IlgJ5SI-N_GQS_VcWaCgHaEM?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
+  ],
+
+  "Instant Death Cheat": [
+    "https://i.pinimg.com/736x/2a/ff/5c/2aff5cf58ba1b9c4380c18e2215ce7b9.jpg",
+  ],
+
+  "Sword Art Online": [
+    "https://tse1.mm.bing.net/th/id/OIP.DujQ6rpO11u8jnzQ4QLwAwHaEK?r=0&rs=1&pid=ImgDetMain&o=7&rm=3",
+  ],
+
+  "K-On!": [
+    "https://i.pinimg.com/736x/f2/01/46/f2014645d49e9debd99574121367934a.jpg",
+  ],
+
+  "There Was a Cute Girl in the Hero's Party, So I Tried Confessing to Her": [
+    "https://i.pinimg.com/736x/8d/35/b0/8d35b0e771d5876d8f0e38d4b3bf454b.jpg",
+  ],
+
+  "Isekai Yururi Kikou: Raising Children While Being an Adventurer": [
+    "https://i.pinimg.com/736x/2e/ed/58/2eed58458dbe80e55dcc82c56dcc826b.jpg",
+  ],
+
+  "The Brilliant Healer's New Life in the Shadows": [
+    "https://i.pinimg.com/736x/ea/1c/73/ea1c73da2a5464dd25b84b33792672b8.jpg",
+  ],
+
+  // ── batch 3 ──────────────────────────────────────────────────────
+
+  "Mission: Yozakura Family": [
+    "https://i.pinimg.com/736x/9e/00/32/9e0032a6f94e94c5b4e24576a2268118.jpg",
+  ],
+
+  // (Discord link — these expire; save the image locally for a permanent one)
+  "Arknights: Prelude to Dawn": [
+    "https://media.discordapp.net/attachments/1539393777498726474/1567593716091330743/image0.gif?ex=6af5f96a&is=6af4a7ea&hm=096cde0366273d66c2cd97672ee184a67fc35b6580693416572be1f9624c0c56&=",
+  ],
+
+  "The Pet Girl of Sakurasou": [
+    "https://i.pinimg.com/736x/f7/e9/c2/f7e9c2435e7fa69e0106650031987762.jpg",
+    "https://i.pinimg.com/1200x/01/5e/f9/015ef99a534c899bba7b5c5a2e7c1aba.jpg",
+  ],
+
+  "Problem Children Are Coming from Another World, Aren't They?!": [
+    "https://i.pinimg.com/1200x/b3/f9/f3/b3f9f3058d39ebe8f054800aa889974c.jpg",
+  ],
+
+  "Puella Magi Madoka Magica": [
+    "https://i.pinimg.com/736x/80/ac/e4/80ace4bbd0d8e57b117c5468d8b9562e.jpg",
+  ],
+
+  "Tonikawa: Over the Moon for You": [
+    "https://i.pinimg.com/1200x/a6/ef/af/a6efaf28d1af3ba1b8010d4caa63315c.jpg",
+  ],
+
+  "The Irregular at Magic High School": [
+    "https://i.pinimg.com/1200x/88/26/5d/88265d9ebe323ecd205841fb47041797.jpg",
+  ],
+
+  "Combatants Will Be Dispatched!": [
+    "https://i.pinimg.com/1200x/01/c5/4c/01c54c2a6bb9ad38251846c4482bd6d4.jpg",
+  ],
+
+  "Cells at Work!": [
+    "https://i.pinimg.com/736x/31/c5/66/31c5661e4f6b89533f2e32ea27540996.jpg",
+  ],
+
+  "The Promised Neverland": [
+    "https://i.pinimg.com/736x/3b/f8/bc/3bf8bcb9d0ed8bd20c2bca4fac9ab289.jpg",
+  ],
+
+  "My Unique Skill Makes Me OP Even at Level 1": [
+    "https://i.pinimg.com/1200x/d8/93/42/d8934202deb2198c267095c2576b1fda.jpg",
+  ],
+
+  "Pokémon": [
+    "https://i.pinimg.com/736x/69/77/d8/6977d89551e04bfd29306667abb47481.jpg",
+  ],
+
+  "One Piece": [
+    "https://preview.redd.it/whats-your-favorite-side-weird-unknown-random-one-piece-v0-r58hku6zurmc1.png?width=346&format=png&auto=webp&s=1cfc8b6de1c6360778866a7f92eb384423943abf",
+  ],
+
+  "A Silent Voice": [
+    "https://i.pinimg.com/736x/46/36/66/46366640573e98aebd979d2cdf46965a.jpg",
+  ],
+
+  "A Sign of Affection": [
+    "https://i.pinimg.com/736x/34/d8/ea/34d8ea890fcbd131094372d07d33ae64.jpg",
+  ],
+
+  "The Foolish Angel Dances with the Devil": [
+    "https://i.pinimg.com/736x/e1/e3/f0/e1e3f0e14af45548f359002c2a5a1a92.jpg",
+  ],
+
+  "Cyberpunk: Edgerunners": [
+    "https://i.pinimg.com/736x/c6/a4/cf/c6a4cf03b7ed6b3c74641a7b57e5c8fb.jpg",
+  ],
+
+  "Can a Boy-Girl Friendship Survive?": [
+    "https://i.pinimg.com/736x/28/08/6f/28086fa6d6dfe7563f2ab304956cf57f.jpg",
+    "https://i.pinimg.com/736x/13/f9/6a/13f96add917409e96894de29fbae39ed.jpg",
+  ],
+
+  "Chainsaw Man": [
+    "https://i.pinimg.com/736x/53/5c/f3/535cf3ed825e6fe528ad387d24b11e40.jpg",
+  ],
+
+  "Call of the Night": [
+    "https://i.pinimg.com/736x/96/ee/be/96eebe54204db285f547ced13bd02d73.jpg",
+  ],
+
+  "Dandadan": [
+    "https://i.pinimg.com/736x/69/62/e8/6962e8b87ebda9f578d71f779ef4928b.jpg",
+  ],
+
+  "Don't Toy with Me, Miss Nagatoro": [
+    "https://i.pinimg.com/736x/ae/e6/68/aee6682e40839cc0284db1ca14c51513.jpg",
+  ],
+
+  "Frieren: Beyond Journey's End": [
+    "https://i.pinimg.com/736x/23/75/d8/2375d87903d891bc205c699025173f93.jpg",
+  ],
+
+  "Food for the Soul": [
+    "https://i.pinimg.com/1200x/8d/32/bc/8d32bc4b1952156813d5bab1efec6bd4.jpg",
+  ],
+
+  "Girls Band Cry": [
+    "https://i.pinimg.com/1200x/78/37/60/7837603059de8cdfb1c4f95647b2160e.jpg",
+  ],
+
+  "Horimiya": [
+    "https://i.pinimg.com/1200x/4b/88/d1/4b88d1f594246dc0b6feb876e37c9922.jpg",
+  ],
+
+  "Hello World": [
+    "https://i.pinimg.com/736x/fd/11/3d/fd113db1cc1e7e16eb27072d0c44215a.jpg",
+  ],
+
+  "Jujutsu Kaisen": [
+    "https://i.pinimg.com/1200x/20/15/e3/2015e3a8cf6574b9f10b96b0b9abc894.jpg",
+  ],
+
+  "Kakegurui": [
+    "https://i.pinimg.com/736x/e3/45/d9/e345d9e534f2dc5c98b19048553a8cde.jpg",
+  ],
+
+  "Kaiju No. 8": [
+    "https://i.pinimg.com/736x/87/2c/13/872c13bf49dcdd394ff2f8c00cadd6ec.jpg",
+  ],
+
+  "Komi Can't Communicate": [
+    "https://i.pinimg.com/1200x/f9/8e/c8/f98ec8efb78c9309bdb2ecaa8571227c.jpg",
+  ],
+
+  "Kaguya-sama: Love Is War": [
+    "https://i.pinimg.com/736x/b7/9c/58/b79c58555fea6d376614f835b2d089ac.jpg",
+  ],
+
+  "Lycoris Recoil": [
+    "https://i.pinimg.com/736x/e3/42/3b/e3423b8cc122956a0eb20ee5af00e78a.jpg",
+  ],
+
+  "Lazarus": [
+    "https://i.pinimg.com/736x/d8/ff/11/d8ff116fbfb1d2096095a13560f01f89.jpg",
+  ],
+
+  "Land of the Lustrous": [
+    "https://i.pinimg.com/736x/6d/27/57/6d27574cfc361907cf05c514b117cdef.jpg",
+  ],
+
+  "Mob Psycho 100": [
+    "https://i.pinimg.com/736x/f4/77/3a/f4773a8dfe0a1df991d85fa5460e345c.jpg",
+  ],
+
+  "Makeine: Too Many Losing Heroines!": [
+    "https://i.pinimg.com/736x/d8/dc/a3/d8dca38bef2cda13281900eb1e1a80c2.jpg",
+  ],
+
+  "My Hero Academia: Vigilantes": [
+    "https://i.pinimg.com/736x/80/42/9e/80429ec6552a150d064a1243fa2d5526.jpg",
+  ],
+
+  "My Dress-Up Darling": [
+    "https://i.pinimg.com/736x/92/b9/a6/92b9a60f4f53cf38d37e59101838ce75.jpg",
+  ],
+
+  "Medalist": [
+    "https://i.pinimg.com/1200x/df/ea/d8/dfead82ad7e4704c55a4882229fb3194.jpg",
+  ],
+
+  "More than a Married Couple, but Not Lovers": [
+    "https://i.pinimg.com/736x/72/00/7c/72007c586bb0d1e6d3d9183bedefaf4f.jpg",
+  ],
+
+  "May I Ask for One Final Thing?": [
+    "https://i.pinimg.com/736x/65/37/df/6537dfc309de479c7f5feb1c31bdfb85.jpg",
+  ],
+
+  "One-Punch Man": [
+    "https://i.pinimg.com/1200x/ed/02/52/ed0252daf3fd4b0479ba29868b78efa0.jpg",
+  ],
+
+  "Oshi no Ko": [
+    "https://i.pinimg.com/1200x/07/a8/df/07a8dfe3dc45ee49f7b4f36154ead573.jpg",
+  ],
+
+  "Our Dating Story: The Experienced You and The Inexperienced Me": [
+    "https://i.pinimg.com/1200x/20/80/f2/2080f21cd047036433fdcb67f7e94219.jpg",
+  ],
+
+  "Pseudo Harem": [
+    "https://i.pinimg.com/1200x/ed/7c/2d/ed7c2d6221567abe52c16be75920da1e.jpg",
+  ],
+
+  "Romantic Killer": [
+    "https://i.pinimg.com/736x/0c/4f/1a/0c4f1a7acf98adb5fab35e98d6ee4eb7.jpg",
+  ],
+
+  "Rock Is a Lady's Modesty": [
+    "https://i.pinimg.com/736x/34/8a/c8/348ac80a87d6b5ef86c7861408fe8349.jpg",
+    "https://i.pinimg.com/736x/1b/68/a4/1b68a48c2e05256b1758f519df074793.jpg",
+  ],
+
+  "Suzume": [
+    "https://i.pinimg.com/1200x/0f/db/cc/0fdbcc4698ecab7d8f7380766e2bbc5f.jpg",
+    "https://i.pinimg.com/736x/9e/52/2e/9e522ec39470407d56b5bef54bb60c4c.jpg",
+  ],
+
+  "Sword Art Online Alternative: Gun Gale Online": [
+    "https://i.pinimg.com/1200x/7c/42/e0/7c42e0d7c9c06b9484ad306069ea4550.jpg",
+  ],
+
+  "Shoshimin: How to Become Ordinary": [
+    "https://i.pinimg.com/736x/d3/85/08/d38508cb7a4a246f05a6c494395cf956.jpg",
+  ],
+
+  "Shikimori's Not Just a Cutie": [
+    "https://i.pinimg.com/736x/e3/e6/33/e3e63353297dc7228865099f01271753.jpg",
+  ],
+
+  "Wonder Egg Priority": [
+    "https://i.pinimg.com/736x/1d/39/49/1d3949590bd5f7f40cfa0ea30ad6eebc.jpg",
+  ],
+
+  "To Be Hero X": [
+    "https://i.pinimg.com/736x/9d/1a/cc/9d1acc9cf407eaac718e1cd1867e7374.jpg",
+    "https://i.pinimg.com/1200x/ab/4a/59/ab4a597a30db4b3a5f3313ba2b46eb74.jpg",
+  ],
+
+  "Teasing Master Takagi-san": [
+    "https://i.pinimg.com/1200x/9f/82/32/9f8232fe7c5c109f5317e8bb97118621.jpg",
+  ],
+
+  "The Tunnel to Summer, the Exit of Goodbye": [
+    "https://i.pinimg.com/1200x/fb/18/fa/fb18fa13115719ee7956b80551748fb8.jpg",
+  ],
+
+  "Tomo-chan Is a Girl!": [
+    "https://i.pinimg.com/1200x/e7/05/aa/e705aa0fdee636edba3585b8a5af036a.jpg",
+  ],
+
+  "The Girl I Like Forgot Her Glasses": [
+    "https://i.pinimg.com/736x/55/76/fa/5576fa0e1cd84b40de7f9a41a828713f.jpg",
+  ],
+
+  "The Dangers in My Heart": [
+    "https://i.pinimg.com/1200x/77/03/d5/7703d5516d1be11e0e250c70a49b2a92.jpg",
+  ],
+
+  "The Children of Shiunji Family": [
+    "https://i.pinimg.com/736x/78/94/85/78948517e3e01fd44bc07f3d58a2efbb.jpg",
+  ],
+
+  "Uma Musume: Cinderella Gray": [
+    "https://i.pinimg.com/736x/a1/79/bb/a179bbf8e636c4c1030ecf02e35de99b.jpg",
+  ],
+
+  "Weathering with You": [
+    "https://i.pinimg.com/736x/02/f8/4f/02f84fcf92e4ad65e33c15c0c2fcd322.jpg",
+  ],
+
+  "Witch Watch": [
+    "https://i.pinimg.com/736x/58/09/22/580922db4535dfa5e894a4a9261f260e.jpg",
+  ],
+
+  "Whisper Me a Love Song": [
+    "https://i.pinimg.com/1200x/a0/92/53/a092533cd0366a7b14eb565d53c56a0e.jpg",
+    "https://i.pinimg.com/1200x/f3/77/1f/f3771f8003d52f545ba11951d3076724.jpg",
+  ],
+
+  "When Will Ayumu Make His Move?": [
+    "https://i.pinimg.com/1200x/e9/38/25/e93825f9ddd6bfe0853c0afa4fa640f5.jpg",
+  ],
+
+  "Your Name.": [
+    "https://i.pinimg.com/736x/20/60/15/2060155710ca5c9cc45d831fdb10eed0.jpg",
+  ],
+
+  "Zenshu": [
+    "https://i.pinimg.com/736x/ba/98/7d/ba987d506058eb1940fa4ecc61001f07.jpg",
+  ],
+
+  "Jellyfish Can't Swim in the Night": [
+    "https://i.pinimg.com/736x/ad/76/f2/ad76f21a4580cb61323fa347bba85581.jpg",
+  ],
+
+  "Secrets of the Silent Witch": [
+    "https://i.pinimg.com/736x/01/7f/ec/017fec9fc8047995f9bc4c8b37cb368c.jpg",
+  ],
+
+  "There's No Freaking Way I'll Be Your Lover! Unless…": [
+    "https://i.pinimg.com/736x/74/8f/54/748f545cf3fc1ea73e110646890cecbe.jpg",
+  ],
+
+  "Senpai Is an Otokonoko": [
+    "https://i.pinimg.com/736x/85/ce/18/85ce181b6020ddcafbaa689fecdb8c41.jpg",
+    "https://i.pinimg.com/736x/62/40/e5/6240e5c97df08097e09b3c59fb25c8fd.jpg",
+  ],
+
+  "Josee, the Tiger and the Fish": [
+    "https://i.pinimg.com/1200x/20/27/44/20274486e3f6fb6b2001deb06c9deca6.jpg",
+  ],
+
+  "Flavors of Youth": [
+    "https://i.pinimg.com/736x/21/30/21/21302119298b8ebcb0ae2fef522bea7b.jpg",
+  ],
+
+  "A Couple of Cuckoos": [
+    "https://i.pinimg.com/736x/f9/eb/90/f9eb903fe36c47817f2e908879b5fb16.jpg",
+  ],
+
+  "Words Bubble Up Like Soda Pop": [
+    "https://i.pinimg.com/1200x/1e/b4/d9/1eb4d9ff9eda2fa0c732f17c5f24e858.jpg",
+  ],
+
+  "Onimai: I'm Now Your Sister!": [
+    "https://i.pinimg.com/736x/da/27/48/da2748d86688644e1876883680720838.jpg",
+    "https://i.pinimg.com/1200x/23/ac/72/23ac72ebfd2cc8a791edefbefd556f2f.jpg",
+  ],
+
+  "Dealing with Mikadono Sisters Is a Breeze": [
+    "https://i.pinimg.com/736x/97/15/2d/97152d7dc6494b48db80c93ad0bd63ea.jpg",
+    "https://i.pinimg.com/736x/80/86/f8/8086f8fab35ba3349b1fdf80398aad7f.jpg",
+  ],
+
+  "Gleipnir": [
+    "https://i.pinimg.com/736x/d9/51/60/d951606843d9f72e83dc65a239412cf6.jpg",
+  ],
+
+  "This Monster Wants to Eat Me": [
+    "https://i.pinimg.com/736x/1e/3e/8b/1e3e8b8959d5ad005c92d9c0724576a3.jpg",
+  ],
+
+  "Fruits Basket: Prelude": [
+    "https://i.pinimg.com/1200x/60/83/4b/60834b53590a82f587173932b5e1ea09.jpg",
+  ],
+
+  "Heavenly Delusion": [
+    "https://i.pinimg.com/1200x/91/ad/bb/91adbb6d087692a206befa69cce36302.jpg",
+  ],
+
+  "Anohana: The Flower We Saw That Day": [
+    "https://i.pinimg.com/1200x/0f/8f/3a/0f8f3a5810e1dcaaa05a385ee33e99bb.jpg",
+  ],
+
+};
+</script>
+</head>
+<body class="dark">
+
+<!-- MENU -->
+<section id="menu" class="screen active" data-theme="dark">
+  <div class="topbar">
+    <div class="logo">Anime Duel</div>
+    <div class="who">
+      <input id="nick" maxlength="14" placeholder="Your nickname">
+      <select id="soloRounds" title="Rounds for solo play">
+        <option value="5">5 rounds</option><option value="10" selected>10 rounds</option><option value="15">15 rounds</option><option value="20">20 rounds</option>
+      </select>
+    </div>
+  </div>
+  <div class="cards">
+    <button class="mcard c1" id="cPlay"><div class="ic">🎴</div><b>Play</b><span>Play a random game</span></button>
+    <button class="mcard c2" id="cMulti"><div class="ic">⚔️</div><b>Multiplayer</b><span>Play against a friend</span></button>
+    <button class="mcard c3" id="cDaily"><div class="ic">📅</div><b>Daily</b><span>Play the daily challenge</span></button>
+  </div>
+</section>
+
+<!-- MULTIPLAYER ENTRY -->
+<section id="mp" class="screen" data-theme="dark">
+  <div class="topbar"><div class="logo">Anime Duel</div></div>
+  <div class="center box stack">
+    <h2>Multiplayer</h2>
+    <input id="nick2" class="field" maxlength="14" placeholder="Your nickname">
+    <button class="rbtn" id="btnHost">Create a room</button>
+    <div class="divider">— or join a friend —</div>
+    <div class="row">
+      <input id="joinCode" class="field" maxlength="5" placeholder="ROOM CODE" style="text-transform:uppercase;letter-spacing:4px;text-align:center;flex:2">
+      <button class="rbtn" id="btnJoin" style="flex:1">Join</button>
+    </div>
+    <div id="joinMsg" class="divider"></div>
+    <button class="obtn" id="btnMpBack">Back</button>
+  </div>
+</section>
+
+<!-- LOBBY -->
+<section id="lobby" class="screen" data-theme="dark">
+  <div class="topbar"><div class="logo">Anime Duel</div></div>
+  <div class="lgrid">
+    <div class="box">
+      <div style="text-align:center;color:#888;font-size:13px">ROOM CODE</div>
+      <div class="code" id="roomCode">-----</div>
+      <div style="text-align:center"><button class="obtn" id="btnCopy" style="color:var(--red)">Copy invite link</button></div>
+      <h3 style="margin:18px 0 4px">Players</h3>
+      <div class="player"><i></i><span id="pMe"></span></div>
+      <div class="player wait" id="pOppBox"><i></i><span id="pOpp"></span></div>
+      <div id="hostOnly" style="margin-top:12px">
+        <label style="font-size:13px;color:#777">Rounds</label>
+        <select id="lobbyRounds" class="field" style="margin-bottom:10px">
+          <option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option>
+        </select>
+        <button class="rbtn" id="btnStart" style="width:100%" disabled>Start match</button>
+      </div>
+      <p id="lobbyHint" style="color:#888;font-size:13px;text-align:center"></p>
+      <div id="lobbyResults" hidden style="margin-top:12px;border-top:2px solid #eee;padding-top:12px"></div>
+      <div style="text-align:center;margin-top:10px"><button class="link" id="btnLeave">Leave room</button></div>
+    </div>
+    <div class="box">
+      <h3 style="margin:0 0 10px">💬 Lobby chat</h3>
+      <div class="chatlog" id="chatlog"></div>
+      <div class="row">
+        <input id="chatIn" class="field" maxlength="200" placeholder="Say something…" autocomplete="off" style="flex:4">
+        <button class="rbtn" id="btnChat" style="flex:1">Send</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOADING -->
+<section id="loading" class="screen" data-theme="dark">
+  <div class="topbar"><div class="logo">Anime Duel</div></div>
+  <div class="center"><div class="spinner"></div><div id="loadMsg">Finding characters…</div></div>
+</section>
+
+<!-- GAME -->
+<section id="game" class="screen" data-theme="dark">
+  <div class="topbar"><div class="logo">Anime Duel</div></div>
+  <div class="g-main">
+    <div class="stage" id="stage">
+      <div class="thumbs" id="thumbs"></div>
+      <div class="frame"><img id="pic" alt="Which anime is this character from?" referrerpolicy="no-referrer"></div>
+    </div>
+    <aside class="side">
+      <div class="banner">
+        <div><span>Round</span><b id="rnd">1/5</b></div>
+        <div><span>Score</span><b id="sc">0</b><small id="oppSc"></small></div>
+      </div>
+      <div class="panel">
+        <div id="guessView">
+          <div class="phead"><span>Which anime is this from?</span><span id="timeTxt">30</span></div>
+          <div class="tbar"><i id="tfill"></i></div>
+          <div class="pbody">
+            <div class="combo">
+              <input id="answer" class="field" placeholder="Type or pick the anime title…" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80">
+              <button type="button" class="chev" id="chev" tabindex="-1" aria-label="Show list">▾</button>
+            </div>
+            <div id="capNote"></div>
+            <button class="gbtn" id="btnSubmit">Submit answer</button>
+            <div style="text-align:center"><button class="link" id="btnPass">I don't know</button></div>
+          </div>
+        </div>
+        <div id="revealView" hidden>
+          <div class="phead"><span>Round result</span><span id="rvRound"></span></div>
+          <div class="pbody">
+            <div id="revealBody"></div>
+            <div id="nextInfo"></div>
+            <button class="gbtn" id="btnNext" hidden>Next ▶</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- END (solo / daily) -->
+<section id="end" class="screen" data-theme="dark">
+  <div class="topbar"><div class="logo">Anime Duel</div></div>
+  <div class="center box">
+    <div id="endResults"></div>
+    <p id="endNote" style="color:#888;font-size:13px"></p>
+    <div class="row" style="margin-top:12px">
+      <button class="rbtn" id="btnAgain">Play again</button>
+      <button class="obtn" id="btnEndMenu" style="color:var(--ink)">Menu</button>
+    </div>
+  </div>
+</section>
+
+<div class="dd" id="dd" hidden></div>
+
+<script>document.addEventListener('pointermove',e=>{const c=e.target.closest&&e.target.closest('.mcard');if(!c)return;const r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px');c.style.setProperty('--my',(e.clientY-r.top)+'px');});</script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+'use strict';
+/*LOGIC_START*/
+/* ===== Anime list: [display title, search query(ies) separated by ||, extra accepted answers] ===== */
+const L=(d,q,al)=>[d,q,al?al.split('|'):[]];
+const ANIME=[
+ L("Bocchi the Rock!","Bocchi the Rock!","bocchi"),
+ L("Akame ga Kill!","Akame ga Kill!","akame"),
+ L("Darling in the Franxx","Darling in the Franxx","ditf|franxx"),
+ L("Kill la Kill","Kill la Kill","klk"),
+ L("86: Eighty-Six","86 Eighty-Six","86|eighty six|eightysix"),
+ L("Re:Zero","Re:Zero Starting Life in Another World","rezero|re zero|re zero kara hajimeru isekai seikatsu"),
+ L("Plastic Memories","Plastic Memories"),
+ L("Takt Op. Destiny","Takt Op. Destiny","takt op|takt"),
+ L("Chained Soldier","Chained Soldier","mato seihei no slave"),
+ L("Gate","Gate","gate jieitai kanochi nite kaku tatakaeri"),
+ L("That Time I Got Reincarnated as a Slime","Tensei shitara Slime Datta Ken","tensura|slime|reincarnated as a slime|tensei shitara slime datta ken"),
+ L("Gurren Lagann","Gurren Lagann","tengen toppa gurren lagann|ttgl"),
+ L("Made in Abyss","Made in Abyss"),
+ L("Spy x Family","Spy x Family","spy family|spyxfamily"),
+ L("Himouto! Umaru-chan","Himouto! Umaru-chan","umaru|umaru chan"),
+ L("The Angel Next Door Spoils Me Rotten","Otonari no Tenshi-sama","angel next door|otonari no tenshisama"),
+ L("Smoking Behind the Supermarket with You","Smoking Behind the Supermarket","smoking behind supermarket|super no ura de yani suu futari"),
+ L("Bofuri","Bofuri","maxing out my defense|bofuri i dont want to get hurt so ill max out my defense"),
+ L("Overlord","Overlord","ainz ooal gown"),
+ L("High School DxD","High School DxD","hs dxd|dxd|highschool dxd"),
+ L("Date A Live","Date A Live","dal"),
+ L("Code Geass","Code Geass","geass|code geass lelouch of the rebellion"),
+ L("The Misfit of Demon King Academy","Maou Gakuin no Futekigousha","misfit at demon academy|misfit of demon king academy|maou gakuin"),
+ L("The Eminence in Shadow","Kage no Jitsuryokusha ni Naritakute","eminence in shadow|kage no jitsuryokusha"),
+ L("Solo Leveling","Solo Leveling","ore dake level up na ken"),
+ L("The Wise Man's Grandchild","Kenja no Mago","wise mans grandchild|grandchild of the wise man"),
+ L("Black Bullet","Black Bullet"),
+ L("Highschool of the Dead","Highschool of the Dead","hotd|hs of dead|high school of the dead"),
+ L("My Hero Academia","Boku no Hero Academia","mha|bnha|boku no hero academia"),
+ L("Attack on Titan","Shingeki no Kyojin","aot|snk|shingeki no kyojin"),
+ L("My Gift Lvl 9999 Unlimited Gacha","My Gift Lvl 9999 Unlimited Gacha||Unlimited Gacha","lv 9999 gacha|lvl 9999 gacha|unlimited gacha|gacha lv 9999"),
+ L("The Ogre's Bride","The Ogre's Bride","ogres bride|ogre bride"),
+ L("Clevatess","Clevatess"),
+ L("Mushoku Tensei: Jobless Reincarnation","Mushoku Tensei","jobless reincarnation"),
+ L("Trapped in a Dating Sim: The World of Otome Games Is Tough for Mobs","Trapped in a Dating Sim","trapped in dating sim|otome games is tough for mobs"),
+ L("The World's Strongest Rearguard","World's Strongest Rearguard","worlds strongest rearguard|strongest rearguard"),
+ L("Hell Mode","Hell Mode","hell mode the hardcore gamer becomes peerless in another world"),
+ L("I Became a Legend After My 10 Year-Long Last Stand","I Became a Legend After My 10 Year-Long Last Stand","legend after 10 year long last stand|10 year long last stand|koko wa ore ni makasete saki ni ike to ittekara 10 nen ga tattara densetsu ni natteita"),
+ L("Wandering Witch: The Journey of Elaina","Wandering Witch","journey of elaina|majo no tabitabi|elaina"),
+ L("Ya Boy Kongming!","Ya Boy Kongming","kongming|paripi koumei"),
+ L("My Teen Romantic Comedy SNAFU","My Teen Romantic Comedy SNAFU","oregairu|snafu|yahari ore no seishun love comedy wa machigatteiru"),
+ L("Alya Sometimes Hides Her Feelings in Russian","Alya Sometimes Hides Her Feelings in Russian","roshidere|alya"),
+ L("Guilty Crown","Guilty Crown"),
+ L("Farming Life in Another World","Farming Life in Another World","farming in another world|isekai nonbiri nouka"),
+ L("Bungo Stray Dogs","Bungou Stray Dogs","bungou stray dogs|bsd"),
+ L("The World's Finest Assassin Gets Reincarnated in Another World as an Aristocrat","World's Finest Assassin","worlds finest assassin|finest assassin"),
+ L("Food Wars!","Food Wars","shokugeki no soma|shokugeki no souma"),
+ L("The Quintessential Quintuplets","Quintessential Quintuplets","quintuplets|5toubun no hanayome|gotoubun no hanayome"),
+ L("Sakamoto Days","Sakamoto Days"),
+ L("The Devil Is a Part-Timer!","Devil is a Part-Timer","devil is a partimer|devil is a part timer|hataraku maou sama|maou sama"),
+ L("Trinity Seven","Trinity Seven","trinity 7"),
+ L("Hero Without a Class: Who Even Needs Skills?!","Hero Without a Class","hero without class who even needs skills|hero without class"),
+ L("To Love-Ru","To Love-Ru","to love ru|toloveru|love ru"),
+ L("KonoSuba","KonoSuba","gods blessing on this wonderful world|kono subarashii sekai ni shukufuku wo"),
+ L("My Deer Friend Nokotan","My Deer Friend Nokotan||Shikanoko Nokonoko Koshitantan","shikanoko|nokotan|shikanoko nokonoko koshitantan"),
+ L("I've Been Killing Slimes for 300 Years and Maxed Out My Level","Killing Slimes for 300 Years","been killing slimes for 300 years|killing slimes for 300 years|slime taoshite 300 nen"),
+ L("Sword of the Demon Hunter: Kijin Gentosho","Sword of the Demon Hunter","kijin gentosho"),
+ L("Aharen-san wa Hakarenai","Aharen-san wa Hakarenai","aharen|aharen san|aharen san is indecipherable"),
+ L("Ragna Crimson","Ragna Crimson"),
+ L("Akiba Maid War","Akiba Maid War","maid wars|akiba maid wars|maid war"),
+ L("Redo of Healer","Redo of Healer","redo healer|kaifuku jutsushi no yarinaoshi"),
+ L("Instant Death Cheat","Sokushi Cheat ga Saikyou sugite||Instant Death Cheat","instant death ability|instant death|sokushi cheat"),
+ L("Sword Art Online","Sword Art Online","sao"),
+ L("K-On!","K-On!","kon|k on|keion"),
+ L("Another","Another"),
+ L("There Was a Cute Girl in the Hero's Party, So I Tried Confessing to Her","There Was a Cute Girl in the Hero's Party","cute girl in the heroes party|there was a cute girl in the heros party|yuusha party ni kawaii ko ga ita no de kokuhaku shite mita"),
+ L("Isekai Yururi Kikou: Raising Children While Being an Adventurer","Isekai Yururi Kikou","raising children while being an adventurer|journey through another world while raising kids|isekai kosodate"),
+ L("The Brilliant Healer's New Life in the Shadows","Brilliant Healer's New Life in the Shadows","brilliant healer|brilliant healers new life in the shadows|new life in the shadows"),
+ L("Mission: Yozakura Family","Mission: Yozakura Family","yozakura family|yozakura"),
+ L("Arknights: Prelude to Dawn","Arknights","arknights|prelude to dawn|touin kiro"),
+ L("The Pet Girl of Sakurasou","Sakurasou no Pet na Kanojo","pet girl of sakurasou|sakurasou"),
+ L("Problem Children Are Coming from Another World, Aren't They?!","Problem Children Are Coming from Another World","mondaiji|problem children"),
+ L("Puella Magi Madoka Magica","Madoka Magica","madoka|puella magi madoka magica"),
+ L("Tonikawa: Over the Moon for You","Tonikawa","over the moon for you|tonikaku kawaii"),
+ L("Danganronpa","Danganronpa"),
+ L("The Irregular at Magic High School","Irregular at Magic High School","irregular at magic high|mahouka|mahouka koukou no rettousei"),
+ L("Combatants Will Be Dispatched!","Combatants Will Be Dispatched","combatants"),
+ L("Cells at Work!","Cells at Work","hataraku saibou"),
+ L("The Promised Neverland","Promised Neverland","yakusoku no neverland"),
+ L("My Unique Skill Makes Me OP Even at Level 1","Level 1 dakedo Unique Skill de Saikyou desu||My Unique Skill Makes Me OP even at Level 1","my unique skill makes me op even at lv 1|unique skill makes me op"),
+ L("Pokémon","Pokemon","pokemon"),
+ L("One Piece","One Piece","op"),
+ L("A Silent Voice","A Silent Voice","silent voice|koe no katachi"),
+ L("A Sign of Affection","A Sign of Affection","sign of affection|yubisaki to renren"),
+ L("The Foolish Angel Dances with the Devil","Foolish Angel Dances with the Devil","a foolish angel dances with the devil|foolish angel"),
+ L("Cyberpunk: Edgerunners","Cyberpunk Edgerunners","edgerunners|cyberpunk"),
+ L("Can a Boy-Girl Friendship Survive?","Can a Boy-Girl Friendship Survive","can a boy girl friendship survive|danjo no yuujou wa seiritsu suru"),
+ L("Chainsaw Man","Chainsaw Man","csm"),
+ L("Call of the Night","Call of the Night","yofukashi no uta"),
+ L("Dandadan","Dandadan","dan da dan"),
+ L("Don't Toy with Me, Miss Nagatoro","Don't Toy with Me Miss Nagatoro","nagatoro|dont toy with me miss nagatoro|ijiranaide nagatoro san"),
+ L("Frieren: Beyond Journey's End","Frieren","sousou no frieren|beyond journeys end"),
+ L("Food for the Soul","Food for the Soul||Hibi wa Sugiredo Meshi Umashi","hibi wa sugiredo meshi umashi"),
+ L("Girls Band Cry","Girls Band Cry"),
+ L("Horimiya","Horimiya"),
+ L("Hello World","Hello World"),
+ L("Jujutsu Kaisen","Jujutsu Kaisen","jjk"),
+ L("Kakegurui","Kakegurui","kakegurui compulsive gambler"),
+ L("Kaiju No. 8","Kaiju No. 8","kaiju 8|kaiju number 8|kaiju no 8|kaijuu 8 gou"),
+ L("Komi Can't Communicate","Komi Can't Communicate","komi|komi san|komi cant communicate|komi san wa komyushou desu"),
+ L("Kaguya-sama: Love Is War","Kaguya-sama Love Is War","kaguya sama|kaguya|love is war|kaguya sama wa kokurasetai"),
+ L("Lycoris Recoil","Lycoris Recoil","lycoris"),
+ L("Lazarus","Lazarus"),
+ L("Land of the Lustrous","Land of the Lustrous","houseki no kuni|lustrous"),
+ L("Mob Psycho 100","Mob Psycho 100","mob psycho|mp100"),
+ L("Makeine: Too Many Losing Heroines!","Makeine","too many losing heroines|make heroine ga oosugiru"),
+ L("My Hero Academia: Vigilantes","My Hero Academia Vigilantes","vigilantes|mha vigilantes|vigilante"),
+ L("My Dress-Up Darling","My Dress-Up Darling","sono bisque doll wa koi wo suru|bisque doll|dress up darling"),
+ L("Medalist","Medalist"),
+ L("More than a Married Couple, but Not Lovers","More than a Married Couple but Not Lovers","more than a married couple but not lovers|fuufu ijou koibito miman|married couple but not lovers"),
+ L("May I Ask for One Final Thing?","May I Ask for One Final Thing","one final thing|saigo ni hitotsu dake onegai shitemo yoroshii deshou ka"),
+ L("One-Punch Man","One Punch Man","opm|one punch"),
+ L("Oshi no Ko","Oshi no Ko"),
+ L("Our Dating Story: The Experienced You and The Inexperienced Me","Our Dating Story The Experienced You and The Inexperienced Me","our dating story|experienced you and inexperienced me|keiken zumi na kimi to keiken zero na ore ga otsukiai suru hanashi"),
+ L("Pseudo Harem","Pseudo Harem","giji harem"),
+ L("Romantic Killer","Romantic Killer"),
+ L("Rock Is a Lady's Modesty","Rock Is a Lady's Modesty","rock is a ladys modesty|rock wa lady no tashinami deshite|rock is a ladies modesty"),
+ L("Suzume","Suzume","suzume no tojimari"),
+ L("Sword Art Online Alternative: Gun Gale Online","Sword Art Online Alternative Gun Gale Online","gun gale online|sao alternative|sao gun gale online|ggo"),
+ L("Shoshimin: How to Become Ordinary","Shoshimin How to Become Ordinary","shoshimin|how to become ordinary"),
+ L("Shikimori's Not Just a Cutie","Shikimori's Not Just a Cutie","shikimori|shikimoris not just a cutie|kawaii dake ja nai shikimori san"),
+ L("Wonder Egg Priority","Wonder Egg Priority","wonder egg"),
+ L("To Be Hero X","To Be Hero X","tbhx"),
+ L("Teasing Master Takagi-san","Teasing Master Takagi-san","takagi san|takagi|karakai jouzu no takagi san"),
+ L("The Tunnel to Summer, the Exit of Goodbye","The Tunnel to Summer the Exit of Goodbye","tunnel to summer|natsu e no tunnel sayonara no deguchi"),
+ L("Tomo-chan Is a Girl!","Tomo-chan Is a Girl","tomo chan|tomo chan is a girl|tomo chan wa onnanoko"),
+ L("The Girl I Like Forgot Her Glasses","The Girl I Like Forgot Her Glasses","girl i like forgot her glasses|suki na ko ga megane wo wasureta|forgot her glasses"),
+ L("The Dangers in My Heart","The Dangers in My Heart","boku no kokoro no yabai yatsu|dangers in my heart|bokuyaba"),
+ L("The Children of Shiunji Family","The Children of Shiunji Family","shiunji family|shiunji ke no kodomotachi"),
+ L("Uma Musume: Cinderella Gray","Uma Musume Cinderella Gray","cinderella gray"),
+ L("Weathering with You","Weathering with You","tenki no ko"),
+ L("Witch Watch","Witch Watch"),
+ L("Whisper Me a Love Song","Whisper Me a Love Song","sasayaku you ni koi wo utau"),
+ L("When Will Ayumu Make His Move?","When Will Ayumu Make His Move","ayumu|soredemo ayumu wa yosetekuru"),
+ L("Your Name.","Kimi no Na wa","your name|kimi no na wa"),
+ L("Zenshu","Zenshu"),
+ L("Jellyfish Can't Swim in the Night","Jellyfish Can't Swim in the Night","jellyfish cant swim in the night|yoru no kurage wa oyogenai|jellyfish"),
+ L("Secrets of the Silent Witch","Secrets of the Silent Witch","silent witch|chinmoku no majo no kakushigoto"),
+ L("There's No Freaking Way I'll Be Your Lover! Unless…","Watashi ga Koibito ni Nareru Wake Nai jan||There's No Freaking Way I'll Be Your Lover","watanare|theres no freaking way ill be your lover|no freaking way ill be your lover"),
+ L("Senpai Is an Otokonoko","Senpai wa Otokonoko","senpai is an otokonoko|otokonoko"),
+ L("Pompo: The Cinephile","Pompo the Cinephile","pompo|eiga daisuki pompo san"),
+ L("Josee, the Tiger and the Fish","Josee the Tiger and the Fish","jose the tiger and the fish|josee|josee to tora to sakana tachi"),
+ L("Flavors of Youth","Flavors of Youth","flavours of youth"),
+ L("A Couple of Cuckoos","A Couple of Cuckoos","cuckoos|kakkou no iinazuke"),
+ L("Words Bubble Up Like Soda Pop","Words Bubble Up Like Soda Pop","soda pop|cider no you ni kotoba ga wakiagaru"),
+ L("Onimai: I'm Now Your Sister!","Onii-chan wa Oshimai","onimai|onii chan wa oshimai|im now your sister"),
+ L("Dealing with Mikadono Sisters Is a Breeze","Dealing with Mikadono Sisters Is a Breeze","mikadono sisters|mikadono sanshimai wa angai choroi"),
+ L("Gleipnir","Gleipnir"),
+ L("This Monster Wants to Eat Me","This Monster Wants to Eat Me","watashi wo tabetai hitodenashi"),
+ L("Fruits Basket: Prelude","Fruits Basket Prelude","fruits basket prelude|fruits basket"),
+ L("Heavenly Delusion","Heavenly Delusion","tengoku daimakyou"),
+ L("Anohana: The Flower We Saw That Day","Ano Hana","anohana|ano hana|the flower we saw that day"),
+];
+
+/* ===== Answer matching ===== */
+function norm(s){return String(s||'').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/&/g,' and ').replace(/['’`]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
+const STOP=new Set(['a','an','the','of','in','to','with','and','is','are','as','at','on','for','my','me','it','from','by','be','was','there','no','ni','wa','wo','ga','de','na','o','x']);
+function toks(n){const all=n.split(' ').filter(Boolean);const t=all.filter(w=>!STOP.has(w)&&(w.length>1||/\d/.test(w)));return t.length?t:all;}
+function lev(a,b){
+  if(a===b)return 0;if(!a.length)return b.length;if(!b.length)return a.length;
+  let prev=Array.from({length:b.length+1},(_,i)=>i);
+  for(let i=1;i<=a.length;i++){const cur=[i];for(let j=1;j<=b.length;j++){cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));}prev=cur;}
+  return prev[b.length];
+}
+function tokEq(a,b){
+  if(a===b)return true;
+  const m=Math.min(a.length,b.length);
+  if(m>=5&&lev(a,b)<=1)return true;
+  if(m>=4&&a[0]===b[0]&&lev(a,b)<=1)return true;
+  if(m>=8&&lev(a,b)<=2)return true;
+  if(a.length>=4&&b.length>a.length&&b.startsWith(a))return true;
+  return false;
+}
+function judge(guess,names){
+  const g=norm(guess);if(!g)return false;
+  const gc=g.replace(/ /g,'');const gt=toks(g);
+  for(const name of names){
+    const n=norm(name);if(!n)continue;
+    const nc=n.replace(/ /g,'');
+    if(gc===nc)return true;
+    if(gc.length>=4&&nc.length>=4&&1-lev(gc,nc)/Math.max(gc.length,nc.length)>=0.84)return true;
+    if(nc.length>=6&&gc.includes(nc))return true;
+    const nt=toks(n);
+    const hit=gt.filter(t=>nt.some(x=>tokEq(t,x))).length;
+    const rec=nt.filter(x=>gt.some(t=>tokEq(t,x))).length;
+    if(gt.length>=2&&hit===gt.length&&rec/nt.length>=0.6)return true;
+    if(gt.length===1&&gt[0].length>=5&&nt.length>=2&&nt.length<=4){
+      const longest=[...nt].sort((p,q)=>q.length-p.length)[0];
+      if(tokEq(gt[0],longest))return true;
+    }
+  }
+  return false;
+}
+function titleMatches(q,t){
+  const nq=norm(q),nt=norm(t);if(!nq||!nt)return false;
+  if(nq.replace(/ /g,'')===nt.replace(/ /g,''))return true;
+  const qt=toks(nq),tt=toks(nt);
+  return qt.length>0&&qt.every(x=>tt.some(y=>tokEq(x,y)));
+}
+/*LOGIC_END*/
+
+/* ===== helpers ===== */
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function hashStr(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return h>>>0;}
+function shuffled(arr,rnd){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const today=()=>new Date().toLocaleDateString('en-CA');
+const safeParse=s=>{try{return JSON.parse(s);}catch(e){return null;}};
+
+const ROUND_MS=30000,CAP_MS=5000,REVEAL_MS=8000,PREFIX='animeduel2-';
+const POINTS_FIRST=5,POINTS_LAST=3; // first correct answer = 5 pts, a later correct answer = 3 pts
+
+/* ===== state ===== */
+let mode=null,peer=null,conn=null,roomCode='',oppHere=false;
+let names={me:'You',opp:'Friend'};
+let rounds=[],buildDone=false,buildErr=false,buildToken=0,matchToken=0;
+let cur=-1,total=0,scores={me:0,opp:0},history=[];
+let submitted=false,myAns=null,oppAns=null,resolved=false,matchActive=false;
+let startAt=0,endAt=0,tick=null,cdTimer=null,nextTimer=null,fallbackTimer=null,revTimers=[];
+const isMP=()=>mode==='host'||mode==='guest';
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const s=$(id);s.classList.add('active');
+  document.body.className=s.dataset.theme||'light';
+  window.scrollTo(0,0);
+}
+function getNick(){
+  const src=$('mp').classList.contains('active')?$('nick2'):$('nick');
+  const n=(src.value.trim()||$('nick').value.trim()||$('nick2').value.trim()||'Player').slice(0,14);
+  try{localStorage.setItem('ad-nick',n);}catch(e){}
+  $('nick').value=n;$('nick2').value=n;return n;
+}
+function clearTimers(){
+  clearInterval(tick);clearInterval(cdTimer);clearTimeout(nextTimer);clearTimeout(fallbackTimer);
+  revTimers.forEach(clearTimeout);revTimers=[];
+}
+
+/* ===== data lookup (Jikan / MyAnimeList) ===== */
+
+let cache=safeParse(localStorage.getItem('ad-cache-v3'))||{};
+const saveCache=()=>{try{localStorage.setItem('ad-cache-v3',JSON.stringify(cache));}catch(e){}};
+function titlesOf(a){
+  const s=new Set();
+  [a.title,a.title_english,...(a.title_synonyms||[]),...((a.titles||[]).map(x=>x.title))].forEach(t=>{if(t&&/[a-z]/i.test(t))s.add(t);});
+  return [...s].slice(0,14);
+}
+async function getJSON(url){
+  for(let i=0;i<4;i++){
+    try{
+      const r=await fetch(url);
+      if(r.status===429){await sleep(1300);continue;}
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return await r.json();
+    }catch(e){if(i===3)throw e;await sleep(800);}
+  }
+  throw new Error('rate limited');
+}
+let lastErr='';
+/* Source 1: AniList (one request per anime, fast and reliable) */
+async function fromAniList(q){
+  const query='query($s:String){Page(perPage:6){media(search:$s,type:ANIME,sort:SEARCH_MATCH){title{romaji english} synonyms isAdult characters(sort:FAVOURITES_DESC,perPage:6){nodes{image{large}}}}}}';
+  for(let i=0;i<3;i++){
+    const r=await fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({query,variables:{s:q}})});
+    if(r.status===429){await sleep(2500);continue;}
+    if(!r.ok)throw new Error('AniList HTTP '+r.status);
+    const j=await r.json();
+    const list=(j.data&&j.data.Page&&j.data.Page.media)||[];
+    const ts=m=>[m.title&&m.title.romaji,m.title&&m.title.english,...(m.synonyms||[])].filter(t=>t&&/[a-z]/i.test(t));
+    const hit=list.find(m=>!m.isAdult&&ts(m).some(t=>titleMatches(q,t)));
+    if(!hit)return null;
+    const imgs=((hit.characters&&hit.characters.nodes)||[]).map(n=>n.image&&n.image.large).filter(u=>u&&!u.includes('default')).slice(0,5);
+    if(!imgs.length)return null;
+    return{imgs,titles:ts(hit).slice(0,14)};
+  }
+  throw new Error('AniList rate limited');
+}
+/* Source 2: Jikan / MyAnimeList (backup) */
+async function fromJikan(q){
+  const j=await getJSON('https://api.jikan.moe/v4/anime?limit=8&q='+encodeURIComponent(q));
+  await sleep(380);
+  const hit=(j.data||[]).find(a=>titlesOf(a).some(t=>titleMatches(q,t)));
+  if(!hit)return null;
+  const c=await getJSON('https://api.jikan.moe/v4/anime/'+hit.mal_id+'/characters');
+  await sleep(380);
+  const url=x=>(x.character&&x.character.images&&((x.character.images.webp&&x.character.images.webp.image_url)||(x.character.images.jpg&&x.character.images.jpg.image_url)))||'';
+  const chars=(c.data||[]).filter(x=>{const u=url(x);return u&&!u.includes('questionmark');})
+    .sort((a,b)=>(b.favorites||0)-(a.favorites||0)).slice(0,5);
+  return chars.length?{imgs:chars.map(url),titles:titlesOf(hit)}:null;
+}
+const SOURCES=[['AniList',fromAniList],['Jikan',fromJikan]];
+const srcFails={AniList:0,Jikan:0};
+function findMine(title){
+  const nt=norm(title);
+  for(const k in MY_IMAGES){
+    if(norm(k)!==nt)continue;
+    const v=MY_IMAGES[k],arr=(Array.isArray(v)?v:[v]).filter(u=>typeof u==='string'&&u.trim());
+    if(arr.length)return arr;
+  }
+  return null;
+}
+Object.keys(MY_IMAGES).forEach(k=>{if(!ANIME.some(a=>norm(a[0])===norm(k)))console.warn('[MY_IMAGES] "'+k+'" does not match any title in the ANIME list — check the spelling.');});
+async function lookup(entry){
+  const key=entry[0];
+  const mine=findMine(key);
+  if(mine)return{imgs:mine,titles:[],own:true};
+  if(cache[key])return cache[key];
+  let tried=0,threw=0;
+  for(const q of entry[1].split('||')){
+    for(const [name,fn] of SOURCES){
+      if(srcFails[name]>=3&&SOURCES.some(([n])=>n!==name&&srcFails[n]<3))continue;
+      tried++;
+      try{
+        const info=await fn(q);srcFails[name]=0;
+        await sleep(350);
+        if(info){cache[key]=info;saveCache();return info;}
+      }catch(e){srcFails[name]++;threw++;lastErr=name+': '+((e&&e.message)||e);}
+    }
+  }
+  if(tried>0&&threw===tried)throw new Error(lastErr);
+  return null;
+}
+const failedTitles=new Set();
+function startBuilding(n,rnd){
+  const my=++buildToken;
+  rounds=[];buildDone=false;buildErr=false;
+  const order=shuffled(ANIME,rnd);
+  (async()=>{
+    let k=0,fails=0;
+    while(rounds.length<n&&k<order.length&&my===buildToken){
+      const e=order[k++];
+      if(failedTitles.has(e[0]))continue;
+      let info=null;
+      try{info=await lookup(e);fails=0;}
+      catch(err){fails++;if(fails>=3){buildErr=true;break;}continue;}
+      if(my!==buildToken)return;
+      if(!info){failedTitles.add(e[0]);continue;}
+      const imgs=info.own?shuffled(info.imgs,rnd):shuffled(info.imgs,rnd).slice(0,2); // your own images: show ALL of them
+      const names=[e[0],...e[2],...e[1].split('||'),...info.titles];
+      rounds.push({imgs,display:e[0],names});
+    }
+    if(my===buildToken)buildDone=true;
+  })();
+}
+async function waitRound(i){
+  for(;;){
+    if(rounds[i])return rounds[i];
+    if(buildDone)return null;
+    await sleep(150);
+  }
+}
+
+/* ===== networking ===== */
+const send=m=>{try{if(conn&&conn.open)conn.send(m);}catch(e){}};
+function makeCode(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:5},()=>a[Math.floor(Math.random()*a.length)]).join('');}
+function wireConn(c){
+  conn=c;
+  const hello=()=>{send({t:'hello',name:names.me});if(mode==='guest'){show('lobby');updateLobby();}};
+  c.on('open',hello);
+  if(c.open)hello();
+  c.on('data',onMsg);
+  c.on('close',onConnClose);
+  c.on('error',()=>{});
+}
+function hostRoom(){
+  if(typeof Peer==='undefined')return alert('Could not load the multiplayer library. Check your internet connection.');
+  names.me=getNick();mode='host';oppHere=false;names.opp='Friend';
+  $('chatlog').innerHTML='';
+  roomCode=makeCode();
+  peer=new Peer(PREFIX+roomCode);
+  peer.on('open',()=>{
+    addChat('','Room created. Share the code or the invite link with your friend.','sys');
+    $('lobbyResults').hidden=true;
+    updateLobby();show('lobby');
+  });
+  peer.on('connection',c=>{if(conn&&conn.open){c.close();return;}wireConn(c);});
+  peer.on('disconnected',()=>{try{peer.reconnect();}catch(e){}});
+  peer.on('error',e=>{
+    if(e.type==='unavailable-id'){try{peer.destroy();}catch(x){}hostRoom();return;}
+    if(e.type==='peer-unavailable')return;
+    alert('Connection problem: '+e.type);toMenu();
+  });
+}
+function joinRoom(){
+  if(typeof Peer==='undefined')return alert('Could not load the multiplayer library. Check your internet connection.');
+  const code=$('joinCode').value.trim().toUpperCase();
+  if(code.length!==5)return alert('Enter the 5-character room code.');
+  names.me=getNick();mode='guest';roomCode=code;oppHere=false;names.opp='Host';
+  $('chatlog').innerHTML='';$('lobbyResults').hidden=true;
+  $('btnJoin').disabled=true;$('joinMsg').textContent='Connecting…';
+  peer=new Peer();
+  peer.on('open',()=>{
+    const c=peer.connect(PREFIX+code,{reliable:true});
+    wireConn(c);
+    setTimeout(()=>{if(mode==='guest'&&!oppHere){alert('Could not connect to that room. Check the code and try again.');toMenu();}},12000);
+  });
+  peer.on('error',e=>{alert(e.type==='peer-unavailable'?'Room not found. Check the code.':'Connection problem: '+e.type);toMenu();});
+}
+function onConnClose(){
+  if(mode==='host'){
+    conn=null;oppHere=false;
+    if(matchActive){matchActive=false;matchToken++;clearTimers();alert('Your friend disconnected.');show('lobby');}
+    addChat('',names.opp+' left the room.','sys');names.opp='Friend';updateLobby();
+  }else if(mode==='guest'){
+    alert('The host closed the room.');toMenu();
+  }
+}
+function onMsg(m){
+  switch(m.t){
+    case 'hello':
+      names.opp=String(m.name||'Friend').slice(0,14);oppHere=true;
+      addChat('',mode==='host'?names.opp+' joined the room!':'Connected to '+names.opp+"'s room.",'sys');
+      updateLobby();break;
+    case 'chat':addChat(names.opp,String(m.text||'').slice(0,200));break;
+    case 'loading':if(mode==='guest'){show('loading');$('loadMsg').textContent='The host is picking characters…';}break;
+    case 'round':
+      if(mode!=='guest')return;
+      if(m.i===0){scores={me:0,opp:0};history=[];}
+      matchActive=true;cur=m.i;total=m.total;beginRound(m.imgs);break;
+    case 'cap':
+      if(mode==='guest'&&!submitted&&m.i===cur)capTimer();break;
+    case 'ans':
+      if(mode!=='host'||m.i!==cur||oppAns)return;
+      oppAns={text:String(m.text||'').slice(0,80),ms:Math.max(0,Math.min(ROUND_MS,+m.ms||ROUND_MS))};
+      if(!submitted)capTimer();
+      tryResolve();break;
+    case 'result':if(mode==='guest')showResult({display:m.display,me:m.me,opp:m.opp,scores:m.scores});break;
+    case 'end':if(mode==='guest'){scores=m.scores;history=m.hist||[];matchActive=false;clearTimers();finish();}break;
+  }
+}
+function capTimer(){
+  endAt=Math.min(endAt,performance.now()+CAP_MS);
+  $('capNote').textContent='⏱ '+names.opp+' answered — you have 5 seconds!';
+}
+
+/* ===== match flow ===== */
+function begin(kind){
+  clearTimers();
+  scores={me:0,opp:0};history=[];cur=-1;matchActive=true;matchToken++;
+  let n,rnd=Math.random;
+  if(kind==='daily'){n=5;rnd=mulberry32(hashStr('animeduel-'+today()));}
+  else if(kind==='solo')n=+$('soloRounds').value;
+  else n=+$('lobbyRounds').value;
+  total=n;
+  startBuilding(n,rnd);
+  show('loading');$('loadMsg').textContent='Finding characters…';
+  if(kind==='mp')send({t:'loading'});
+  nextRound();
+}
+async function nextRound(){
+  clearTimeout(nextTimer);clearInterval(cdTimer);
+  const my=matchToken;
+  cur++;
+  if(cur>=total)return endGame();
+  const r=await waitRound(cur);
+  if(my!==matchToken)return;
+  if(!r){
+    if(!rounds.length){
+      alert(buildErr?'Could not load characters from the anime databases.\n\nDetails: '+lastErr+'\n\nCheck your internet connection, try another network or turn off ad-blockers, then try again.':'No rounds could be loaded. Please try again.');
+      matchActive=false;
+      return isMP()?(show('lobby'),updateLobby()):toMenu();
+    }
+    total=rounds.length;return endGame();
+  }
+  if(mode==='host')send({t:'round',i:cur,total,imgs:r.imgs});
+  beginRound(r.imgs);
+  if(mode==='host'){
+    clearTimeout(fallbackTimer);
+    fallbackTimer=setTimeout(()=>{if(!oppAns)oppAns={text:'',ms:ROUND_MS};tryResolve();},ROUND_MS+CAP_MS+4000);
+  }
+}
+/* ===== pictures: main view + thumbnails ===== */
+let pics=[];
+function fitPic(){
+  const im=$('pic');if(!im.naturalWidth)return;
+  const st=$('stage'),th=$('thumbs');
+  const used=th.hidden?0:th.offsetHeight+12;
+  const availW=Math.max(100,st.clientWidth-4);
+  const availH=Math.max(100,st.clientHeight-used-4);
+  const k=Math.min(availW/im.naturalWidth,availH/im.naturalHeight,1.5);
+  im.style.width=Math.round(im.naturalWidth*k)+'px';
+  im.style.height=Math.round(im.naturalHeight*k)+'px';
+}
+function showPic(i){
+  [...$('thumbs').children].forEach((b,k)=>b.classList.toggle('sel',k===i));
+  const im=$('pic');im.classList.remove('in');im.src=pics[i];
+}
+function setPics(imgs){
+  pics=Array.isArray(imgs)?imgs:[imgs];
+  const th=$('thumbs');th.innerHTML='';th.hidden=pics.length<2;
+  pics.forEach((u,i)=>{
+    const b=el('button','thumb');b.type='button';
+    const t=document.createElement('img');t.src=u;t.alt='Character '+(i+1);t.referrerPolicy='no-referrer';
+    b.append(t);b.onclick=()=>showPic(i);th.append(b);
+  });
+  showPic(0);
+}
+$('pic').addEventListener('load',()=>{fitPic();requestAnimationFrame(()=>$('pic').classList.add('in'));});
+$('pic').addEventListener('error',()=>$('pic').classList.add('in'));
+window.addEventListener('resize',fitPic);
+if(window.ResizeObserver)new ResizeObserver(fitPic).observe($('stage'));
+
+/* ===== answer dropdown (pick from the list or type) ===== */
+const CHOICES=ANIME.map(e=>({title:e[0],key:norm(e[0]).replace(/^(the|a|an) /,''),hay:norm([e[0],...e[2]].join(' '))}))
+  .sort((a,b)=>a.key.localeCompare(b.key));
+let ddOpen=false,ddHi=-1,ddItems=[],ddSuppress=false;
+function filterChoices(q){
+  const n=norm(q);if(!n)return CHOICES;
+  const starts=[],has=[];
+  CHOICES.forEach(c=>{
+    if(c.key.startsWith(n)||norm(c.title).startsWith(n))starts.push(c);
+    else if(c.hay.includes(n))has.push(c);
+  });
+  return starts.concat(has);
+}
+function placeDD(){
+  const dd=$('dd'),r=$('answer').getBoundingClientRect();
+  dd.style.left=r.left+'px';dd.style.width=r.width+'px';
+  const above=r.top-16,below=window.innerHeight-r.bottom-16;
+  if(above>=220||above>=below){dd.style.top='auto';dd.style.bottom=(window.innerHeight-r.top+6)+'px';dd.style.maxHeight=Math.min(320,above)+'px';}
+  else{dd.style.bottom='auto';dd.style.top=(r.bottom+6)+'px';dd.style.maxHeight=Math.min(320,below)+'px';}
+}
+function renderDD(){
+  const dd=$('dd');dd.innerHTML='';ddItems=[];
+  const q=$('answer').value;
+  const list=filterChoices(q);
+  if(!list.length){dd.append(el('div','dn','No match in the list — press Submit to send what you typed.'));return;}
+  let lastLetter='';
+  list.forEach(c=>{
+    if(!norm(q)){
+      const L0=(c.key[0]||'#').toUpperCase();
+      if(L0!==lastLetter){lastLetter=L0;dd.append(el('div','dh',/[A-Z]/.test(L0)?L0:'#'));}
+    }
+    const d=el('div','di',c.title);
+    d.onmousedown=e=>e.preventDefault();
+    d.onclick=()=>chooseDD(c.title);
+    dd.append(d);ddItems.push(d);
+  });
+  ddHi=-1;
+}
+function openDD(){
+  if($('answer').disabled)return;
+  ddOpen=true;$('dd').hidden=false;renderDD();placeDD();
+}
+function closeDD(){ddOpen=false;ddHi=-1;$('dd').hidden=true;}
+function chooseDD(title){
+  $('answer').value=title;closeDD();$('btnSubmit').focus();
+}
+function moveDD(step){
+  if(!ddItems.length)return;
+  if(ddHi>=0)ddItems[ddHi].classList.remove('hi');
+  ddHi=(ddHi+step+ddItems.length)%ddItems.length;
+  ddItems[ddHi].classList.add('hi');ddItems[ddHi].scrollIntoView({block:'nearest'});
+}
+function beginRound(imgs){
+  clearInterval(tick);clearInterval(cdTimer);revTimers.forEach(clearTimeout);revTimers=[];
+  submitted=false;myAns=null;oppAns=null;resolved=false;
+  show('game');
+  $('rnd').textContent=(cur+1)+'/'+total;
+  $('sc').textContent=scores.me;
+  $('oppSc').textContent=isMP()?names.opp+': '+scores.opp:'';
+  setPics(imgs);
+  $('guessView').hidden=false;$('revealView').hidden=true;
+  closeDD();
+  $('answer').value='';$('answer').disabled=false;$('btnSubmit').disabled=false;$('btnPass').disabled=false;
+  $('capNote').textContent='';
+  setTimeout(()=>{ddSuppress=true;$('answer').focus();},50);
+  startAt=performance.now();endAt=startAt+ROUND_MS;
+  tick=setInterval(onTick,100);onTick();
+}
+function onTick(){
+  const left=Math.max(0,endAt-performance.now());
+  $('timeTxt').textContent=Math.ceil(left/1000);
+  $('tfill').style.width=(100*Math.min(1,left/ROUND_MS))+'%';
+  $('tfill').classList.toggle('urgent',left<=CAP_MS);
+  if(left<=0&&!submitted)submit();
+}
+function submit(){
+  if(submitted)return;submitted=true;
+  const text=$('answer').value.trim().slice(0,80);
+  const ms=Math.min(ROUND_MS,performance.now()-startAt);
+  $('answer').disabled=true;$('btnSubmit').disabled=true;$('btnPass').disabled=true;
+  if(isMP())$('capNote').textContent='Answer locked in — waiting for '+names.opp+'…';
+  if(mode==='guest'){send({t:'ans',i:cur,text,ms});return;}
+  myAns={text,ms};
+  if(mode==='host'&&!oppAns)send({t:'cap',i:cur});
+  tryResolve();
+}
+function tryResolve(){
+  if(resolved||mode==='guest'||!myAns)return;
+  if(isMP()&&!oppAns)return;
+  resolved=true;clearTimeout(fallbackTimer);
+  const r=rounds[cur];
+  const j=a=>{
+    const ok=!!(a&&a.text&&judge(a.text,r.names));
+    const pts=ok?POINTS_FIRST:0;
+    return{text:a?a.text:'',ok,pts};
+  };
+  const me=j(myAns),opp=isMP()?j(oppAns):null;
+  if(opp&&me.ok&&opp.ok){ // both right: the faster one gets 5, the slower one 3
+    if(myAns.ms<oppAns.ms)opp.pts=POINTS_LAST;
+    else if(oppAns.ms<myAns.ms)me.pts=POINTS_LAST;
+  }
+  const ns={me:scores.me+me.pts,opp:scores.opp+(opp?opp.pts:0)};
+  if(mode==='host')send({t:'result',display:r.display,me:opp,opp:me,scores:{me:ns.opp,opp:ns.me}});
+  showResult({display:r.display,me,opp,scores:ns});
+  nextTimer=setTimeout(nextRound,REVEAL_MS);
+}
+function showResult(res){
+  clearInterval(tick);clearInterval(cdTimer);revTimers.forEach(clearTimeout);revTimers=[];
+  submitted=true;
+  history.push({display:res.display,me:res.me,opp:res.opp});
+  const finalScores=res.scores;
+  $('guessView').hidden=true;$('revealView').hidden=false;
+  $('rvRound').textContent=(cur+1)+'/'+total;
+  const box=$('revealBody');box.innerHTML='';
+  const rows=[[names.me,res.me]];if(res.opp)rows.push([names.opp,res.opp]);
+  const items=rows.map(([nm,a])=>{
+    const row=el('div','rrow');
+    const verd=el('div','rverd','…');
+    row.append(el('div','rname',nm),el('div','rsaid',a.text||'— no answer —'),verd);
+    box.append(row);return{row,a,verd};
+  });
+  const abox=el('div','abox');const atitle=el('div','atitle','???');
+  abox.append(el('small','','The anime was'),atitle);box.append(abox);
+  $('btnNext').hidden=true;
+  const last=cur+1>=total;
+  const t0=performance.now();
+  const upd=()=>{const s=Math.max(0,Math.ceil((REVEAL_MS-(performance.now()-t0))/1000));$('nextInfo').textContent=(last?'Final results in ':'Next round in ')+s+'s';};
+  upd();cdTimer=setInterval(upd,250);
+  revTimers.push(setTimeout(()=>{
+    items.forEach(({row,a,verd})=>{row.classList.add(a.ok?'ok':'bad');verd.textContent=a.ok?'✓ +'+a.pts:'✗';});
+    atitle.textContent=res.display;abox.classList.add('show');
+    scores=finalScores;
+    $('sc').textContent=scores.me;$('sc').classList.remove('bump');void $('sc').offsetWidth;$('sc').classList.add('bump');
+    $('oppSc').textContent=isMP()?names.opp+': '+scores.opp:'';
+    if(!isMP()){$('btnNext').hidden=false;$('btnNext').textContent=last?'See results ▶':'Next ▶';}
+  },isMP()?2200:1300));
+}
+function endGame(){
+  clearTimers();matchActive=false;
+  if(mode==='host')send({t:'end',scores:{me:scores.opp,opp:scores.me},hist:history.map(h=>({display:h.display,me:h.opp,opp:h.me}))});
+  finish();
+}
+function finish(replay){
+  if(isMP()){renderResults($('lobbyResults'));$('lobbyResults').hidden=false;updateLobby();show('lobby');}
+  else{
+    renderResults($('endResults'));
+    $('btnAgain').hidden=(mode==='daily');
+    $('endNote').textContent=mode==='daily'?(replay?"You already played today's challenge. Come back tomorrow!":'Come back tomorrow for a new daily challenge!'):'';
+    if(mode==='daily'&&!replay){try{localStorage.setItem('ad-daily-'+today(),JSON.stringify({score:scores.me,history}));}catch(e){}}
+    show('end');
+  }
+}
+function renderResults(box){
+  box.innerHTML='';
+  const head=el('div','rhead');
+  if(isMP()){
+    head.append(el('div','rbig',scores.me>scores.opp?'🏆 You win!':scores.me<scores.opp?'😢 '+names.opp+' wins':"🤝 It's a draw!"),
+      el('div','rsub',names.me+' '+scores.me+'  —  '+scores.opp+' '+names.opp));
+  }else head.append(el('div','rbig','Final score'),el('div','rsub',scores.me+' points'));
+  box.append(head);
+  const t=el('table','rtable');const hr=el('tr');
+  ['Anime',isMP()?names.me:'Your answer',isMP()?names.opp:'Points'].forEach(x=>hr.append(el('th','',x)));t.append(hr);
+  history.forEach(h=>{
+    const tr=el('tr');tr.append(el('td','',h.display));
+    const cell=a=>el('td',a.ok?'ok':'bad',(a.ok?'✓ ':'✗ ')+(a.text||'—')+(a.ok?' (+'+a.pts+')':''));
+    if(isMP()&&h.opp){tr.append(cell(h.me),cell(h.opp));}
+    else tr.append(el('td','',h.me.text||'—'),el('td',h.me.ok?'ok':'bad',h.me.ok?'+'+h.me.pts:'0'));
+    t.append(tr);
+  });
+  box.append(t);
+}
+
+/* ===== lobby UI ===== */
+function updateLobby(){
+  $('roomCode').textContent=roomCode||'-----';
+  $('pMe').textContent=names.me+(mode==='host'?' (host)':'');
+  $('pOpp').textContent=oppHere?names.opp+(mode==='guest'?' (host)':''):'Waiting for a friend…';
+  $('pOppBox').classList.toggle('wait',!oppHere);
+  $('hostOnly').hidden=mode!=='host';
+  $('btnStart').disabled=!(mode==='host'&&oppHere&&!matchActive);
+  $('lobbyHint').textContent=mode==='host'?(oppHere?'Everyone is here — press Start!':'Share the code or the invite link.'):'Waiting for the host to start the match…';
+}
+function addChat(who,text,cls){
+  const m=el('div','msg '+(cls||''));
+  if(who)m.append(el('b','',who+': '));
+  m.append(document.createTextNode(text));
+  $('chatlog').append(m);$('chatlog').scrollTop=1e9;
+}
+function sendChat(){
+  const t=$('chatIn').value.trim().slice(0,200);if(!t)return;
+  if(!oppHere)addChat('','Nobody else is in the room yet.','sys');
+  else{send({t:'chat',text:t});addChat(names.me,t,'me');}
+  $('chatIn').value='';
+}
+function toMenu(){
+  matchToken++;buildToken++;clearTimers();matchActive=false;
+  const p=peer,c=conn;mode=null;peer=null;conn=null;oppHere=false;
+  try{c&&c.close();}catch(e){}try{p&&p.destroy();}catch(e){}
+  $('btnJoin').disabled=false;$('joinMsg').textContent='';
+  history.length=0;
+  show('menu');
+}
+
+/* ===== wiring ===== */
+try{const n=localStorage.getItem('ad-nick')||'';$('nick').value=n;$('nick2').value=n;}catch(e){}
+$('cPlay').onclick=()=>{names.me=getNick();mode='solo';begin('solo');};
+$('cMulti').onclick=()=>show('mp');
+$('cDaily').onclick=()=>{
+  names.me=getNick();mode='daily';
+  const saved=safeParse(localStorage.getItem('ad-daily-'+today()));
+  if(saved){scores={me:saved.score,opp:0};history=saved.history||[];finish(true);}
+  else begin('daily');
+};
+$('btnHost').onclick=hostRoom;
+$('btnJoin').onclick=joinRoom;
+$('joinCode').addEventListener('keydown',e=>{if(e.key==='Enter')joinRoom();});
+$('btnMpBack').onclick=()=>show('menu');
+$('btnStart').onclick=()=>begin('mp');
+$('btnLeave').onclick=toMenu;
+$('btnAgain').onclick=()=>{names.me=getNick();mode='solo';begin('solo');};
+$('btnEndMenu').onclick=toMenu;
+$('btnSubmit').onclick=submit;
+$('btnPass').onclick=()=>{$('answer').value='';submit();};
+$('answer').addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'){e.preventDefault();if(!ddOpen)openDD();moveDD(1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();if(!ddOpen)openDD();moveDD(-1);}
+  else if(e.key==='Escape'){closeDD();}
+  else if(e.key==='Enter'){
+    e.preventDefault();
+    if(ddOpen&&ddHi>=0&&ddItems[ddHi])chooseDD(ddItems[ddHi].textContent);
+    else{closeDD();submit();}
+  }
+});
+$('answer').addEventListener('input',()=>{openDD();});
+$('answer').addEventListener('focus',()=>{if(ddSuppress){ddSuppress=false;return;}openDD();});
+$('answer').addEventListener('click',()=>{if(!ddOpen)openDD();});
+$('answer').addEventListener('blur',()=>{setTimeout(closeDD,150);});
+$('chev').onmousedown=e=>e.preventDefault();
+$('chev').onclick=()=>{if(ddOpen)closeDD();else{$('answer').focus();openDD();}};
+window.addEventListener('resize',()=>{if(ddOpen)placeDD();});
+$('btnNext').onclick=()=>{clearTimeout(nextTimer);clearInterval(cdTimer);nextRound();};
+$('btnChat').onclick=sendChat;
+$('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat();});
+$('btnCopy').onclick=()=>{
+  const link=location.href.split('#')[0]+'#'+roomCode;
+  const done=()=>{$('btnCopy').textContent='Copied!';setTimeout(()=>$('btnCopy').textContent='Copy invite link',1500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(link).then(done,()=>prompt('Copy this link:',link));
+  else prompt('Copy this link:',link);
+};
+if(location.hash.length>1){$('joinCode').value=location.hash.slice(1,6).toUpperCase();show('mp');}
+</script>
+</body>
+</html>
